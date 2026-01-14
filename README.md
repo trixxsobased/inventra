@@ -1,5 +1,8 @@
 # Inventra - Sistem Informasi Inventaris Sekolah
 
+![Laravel](https://img.shields.io/badge/Laravel-11-FF2D20?style=flat&logo=laravel&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=flat&logo=php&logoColor=white)
+
 Aplikasi web untuk mengelola inventaris alat dan peminjaman di sekolah/SMK.
 
 ## Fitur Utama
@@ -21,7 +24,7 @@ Aplikasi web untuk mengelola inventaris alat dan peminjaman di sekolah/SMK.
 
 1. Clone repo
 ```bash
-git clone <repo-url>
+git clone https://github.com/trixxsobased/inventra.git
 cd inventra
 ```
 
