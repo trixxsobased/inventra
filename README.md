@@ -43,6 +43,19 @@ Aplikasi web untuk mengelola inventaris alat dan peminjaman di SMK Negeri 1 Jena
 - Petugas: Operational, verifikasi, pengembalian
 - Peminjam (Siswa): Browse catalog, request borrow
 
+## Alur Sirkulasi Aset
+
+```mermaid
+graph TD
+    A[Stok Awal] -->|Dipinjam| B(Siswa)
+    B -->|Kembali Baik| A
+    B -->|Kembali Rusak Berat| C{Log Barang Rusak}
+    C -->|Stok Tidak Bertambah| D[Stok Menipis]
+    D -->|Admin Buat Pengajuan| E[Surat Pengajuan PDF]
+    E -->|Approval Kepsek| F[Pembelian Barang Baru]
+    F --> A
+```
+
 ## Tech Stack
 
 - Laravel 11
@@ -93,17 +106,13 @@ Buka `http://localhost:8000`
 
 ## Default Login
 
-**Admin:**
-- Username: `admin`
-- Password: `admin123`
+| Role | Username | Password |
+|------|----------|----------|
+| Admin | `admin` | `admin123` |
+| Petugas | `petugas` | `petugas123` |
+| Peminjam | `siswa` | `siswa123` |
 
-**Petugas:**
-- Username: `petugas`
-- Password: `petugas123`
-
-**Peminjam (Siswa Demo):**
-- Username: `siswa`
-- Password: `siswa123`
+> Login bisa pakai Username atau Email (`admin@smkn1jenangan.sch.id`)
 
 ## Screenshot
 
@@ -139,7 +148,3 @@ Buka `http://localhost:8000`
 ## Developer
 
 Dibuat sebagai project UKK RPL - SMK Negeri 1 Jenangan
-
----
-
-Still Learn
