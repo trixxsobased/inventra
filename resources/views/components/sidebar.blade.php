@@ -113,6 +113,13 @@
                         <span>Laporan</span>
                     </a>
                 </div>
+
+                <div class="sidebar-item {{ request()->routeIs('admin.damaged-equipment.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.damaged-equipment.index') }}" class="sidebar-link">
+                        <i class="bi bi-exclamation-octagon"></i>
+                        <span>Barang Rusak</span>
+                    </a>
+                </div>
             @endif
             
             <div class="sidebar-title">AKUN</div>

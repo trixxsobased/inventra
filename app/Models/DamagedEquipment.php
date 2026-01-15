@@ -38,4 +38,9 @@ class DamagedEquipment extends Model
     {
         return $this->belongsTo(User::class, 'reported_by');
     }
+
+    public function getDescriptionAttribute(): string
+    {
+        return $this->damage_description ?? '-';
+    }
 }

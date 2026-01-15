@@ -1,9 +1,9 @@
 # Inventra - Sistem Informasi Inventaris Sekolah
 
-![Blade](https://img.shields.io/badge/Blade-42.8%25-f7523f?style=flat&logo=laravel&logoColor=white)
-![PHP](https://img.shields.io/badge/PHP-20.8%25-777BB4?style=flat&logo=php&logoColor=white)
-![SCSS](https://img.shields.io/badge/SCSS-26.6%25-CC6699?style=flat&logo=sass&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-9.7%25-F7DF1E?style=flat&logo=javascript&logoColor=black)
+![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-00000F?style=for-the-badge&logo=mysql&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
 
 Aplikasi web untuk mengelola inventaris alat dan peminjaman di SMK Negeri 1 Jenangan.
 

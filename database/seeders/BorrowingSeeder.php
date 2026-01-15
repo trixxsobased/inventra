@@ -14,101 +14,112 @@ class BorrowingSeeder extends Seeder
     public function run(): void
     {
         $admin = User::where('role', 'admin')->first();
-        $siswa = User::where('role', 'peminjam')->first();
+        $petugas = User::where('role', 'petugas')->first();
         
-        $equipment1 = Equipment::where('name', 'like', '%Mikrotik%')->orWhere('name', 'like', '%PC%')->first();
-        $equipment2 = Equipment::where('name', 'like', '%Jangka Sorong%')->orWhere('name', 'like', '%Bubut%')->first();
-        $equipment3 = Equipment::where('name', 'like', '%Helm%')->orWhere('name', 'like', '%Las%')->first();
-        $equipment4 = Equipment::where('name', 'like', '%Oscilloscope%')->orWhere('name', 'like', '%Power%')->first();
-        $equipment5 = Equipment::where('name', 'like', '%PLC%')->orWhere('name', 'like', '%Sensor%')->first();
-        
-        if (!$equipment1) $equipment1 = Equipment::first();
-        if (!$equipment2) $equipment2 = Equipment::skip(1)->first() ?? $equipment1;
-        if (!$equipment3) $equipment3 = Equipment::skip(2)->first() ?? $equipment1;
-        if (!$equipment4) $equipment4 = Equipment::skip(3)->first() ?? $equipment1;
-        if (!$equipment5) $equipment5 = Equipment::skip(4)->first() ?? $equipment1;
-        
-        if (!$siswa || !$equipment1) {
-            $this->command->warn('⚠️ Skipping BorrowingSeeder - missing siswa or equipment');
+        $students = User::where('role', 'peminjam')->get();
+        if ($students->isEmpty()) {
+            $this->command->warn('⚠️ No students found. Run UserSeeder first.');
             return;
         }
 
-        Borrowing::create([
-            'user_id' => $siswa->id,
-            'equipment_id' => $equipment1->id,
-            'borrow_date' => Carbon::now(),
-            'planned_return_date' => Carbon::now()->addDays(3),
-            'actual_return_date' => null,
-            'status' => 'pending',
-            'purpose' => 'Praktikum Jaringan Komputer',
-            'notes' => null,
-            'verified_by' => null,
-        ]);
+        $equipments = Equipment::where('stock', '>', 0)->get();
+        if ($equipments->count() < 10) {
+            $this->command->warn('⚠️ Not enough equipment. Run EquipmentSeeder first.');
+            return;
+        }
 
-        $activeBorrowing = Borrowing::create([
-            'user_id' => $siswa->id,
-            'equipment_id' => $equipment2->id,
-            'borrow_date' => Carbon::now()->subDays(2),
-            'planned_return_date' => Carbon::now()->addDays(5),
-            'actual_return_date' => null,
-            'status' => 'borrowed',
-            'purpose' => 'Praktikum Pemesinan',
-            'notes' => 'Disetujui untuk praktikum',
-            'verified_by' => $admin->id ?? null,
-            'verified_at' => Carbon::now()->subDays(2),
-        ]);
-        $equipment2->decrement('stock');
+        // 1. Data Peminjaman Aktif
+        $this->createBorrowing($students[0], $equipments[0], 'borrowed', -2, 3);
+        $this->createBorrowing($students[1] ?? $students[0], $equipments[1], 'borrowed', -1, 5);
 
-        Borrowing::create([
-            'user_id' => $siswa->id,
-            'equipment_id' => $equipment3->id,
-            'borrow_date' => Carbon::now()->subDays(10),
-            'planned_return_date' => Carbon::now()->subDays(7),
-            'actual_return_date' => Carbon::now()->subDays(7),
-            'status' => 'returned',
-            'purpose' => 'Praktikum Pengelasan',
-            'notes' => 'Dikembalikan tepat waktu',
-            'verified_by' => $admin->id ?? null,
-            'verified_at' => Carbon::now()->subDays(10),
-        ]);
+        // Guru meminjam alat
+        $teacher = $students->firstWhere('username', 'guru') ?? $students[0];
+        $this->createBorrowing($teacher, $equipments[5], 'borrowed', 0, 7, 'Keperluan mengajar kelas X TPL');
 
-        $lateBorrowing = Borrowing::create([
-            'user_id' => $siswa->id,
-            'equipment_id' => $equipment4->id,
-            'borrow_date' => Carbon::now()->subDays(20),
-            'planned_return_date' => Carbon::now()->subDays(15),
-            'actual_return_date' => Carbon::now()->subDays(10),
-            'status' => 'returned',
-            'purpose' => 'Praktikum Elektronika',
-            'notes' => 'Terlambat 5 hari',
-            'verified_by' => $admin->id ?? null,
-            'verified_at' => Carbon::now()->subDays(20),
-        ]);
-        
+        // 2. Data Peminjaman Terlambat (Overdue)
+        $this->createBorrowing($students[2] ?? $students[0], $equipments[2], 'borrowed', -10, -3); 
+
+        // 3. Menunggu Verifikasi (Pending)
+        $this->createBorrowing($students[0], $equipments[3], 'pending', 0, 3, 'Mohon segera di acc pak');
+        $this->createBorrowing($students[1] ?? $students[0], $equipments[4], 'pending', 0, 2);
+
+        // 4. Riwayat Peminjaman (Sudah Kembali)
+        $this->createBorrowing($students[0], $equipments[6], 'returned', -20, -18, 'Praktikum dasar', -18);
+        $this->createBorrowing($students[1] ?? $students[0], $equipments[7], 'returned', -15, -14, 'Praktikum lanjut', -14);
+
+        // 5. Skenario Denda
+        // Denda lunas
+        $latePaid = $this->createBorrowing($students[0], $equipments[8], 'returned', -30, -25, 'Project akhir', -20);
         Fine::create([
-            'borrowing_id' => $lateBorrowing->id,
+            'borrowing_id' => $latePaid->id,
             'amount' => 25000,
             'days_late' => 5,
             'rate_per_day' => 5000,
-            'is_paid' => false,
-            'paid_at' => null,
-            'notes' => 'Keterlambatan pengembalian 5 hari',
+            'is_paid' => true,
+            'paid_at' => now()->subDays(20),
         ]);
 
-        if ($equipment5) {
-            Borrowing::create([
-                'user_id' => $siswa->id,
-                'equipment_id' => $equipment5->id,
-                'borrow_date' => Carbon::now()->subHours(2),
-                'planned_return_date' => Carbon::now()->addDays(2),
-                'actual_return_date' => null,
-                'status' => 'pending',
-                'purpose' => 'Praktikum Otomasi Industri',
-                'notes' => null,
-                'verified_by' => null,
-            ]);
+        // Denda belum lunas
+        $lateUnpaid = $this->createBorrowing($students[2] ?? $students[0], $equipments[9], 'returned', -10, -5, 'Lupa mengembalikan', -1);
+        Fine::create([
+            'borrowing_id' => $lateUnpaid->id,
+            'amount' => 20000,
+            'days_late' => 4,
+            'rate_per_day' => 5000,
+            'is_paid' => false,
+        ]);
+
+        // 6. Skenario Barang Rusak
+        $damagedBorrowing = $this->createBorrowing($students[0], $equipments[10] ?? $equipments[0], 'returned', -5, -2, 'Jatuh saat praktikum', -2, 'rusak berat');
+
+        // 7. Pengajuan Ditolak
+        $rejected = Borrowing::create([
+            'user_id' => $students[0]->id,
+            'equipment_id' => $equipments[0]->id,
+            'borrow_date' => Carbon::now()->subDays(5),
+            'planned_return_date' => Carbon::now()->addDays(2),
+            'status' => 'rejected',
+            'purpose' => 'Main game',
+            'notes' => null,
+            'rejection_reason' => 'Tidak sesuai peruntukan penggunaan alat sekolah.',
+            'verified_by' => $admin->id,
+            'verified_at' => Carbon::now()->subDays(5),
+        ]);
+    }
+
+    private function createBorrowing($user, $equipment, $status, $startOffset, $planOffset, $purpose = 'Praktikum', $returnOffset = null, $condition = 'baik')
+    {
+        $borrowDate = Carbon::now()->addDays($startOffset);
+        $planDate = Carbon::now()->addDays($planOffset);
+        
+        $actualReturnDate = $returnOffset !== null ? Carbon::now()->addDays($returnOffset) : null;
+        
+        $verifiedBy = ($status !== 'pending') ? User::where('role', 'admin')->first()->id : null;
+        $verifiedAt = ($status !== 'pending') ? $borrowDate : null;
+
+        $borrowing = Borrowing::create([
+            'user_id' => $user->id,
+            'equipment_id' => $equipment->id,
+            'borrow_date' => $borrowDate,
+            'planned_return_date' => $planDate,
+            'actual_return_date' => $actualReturnDate,
+            'status' => $status,
+            'purpose' => $purpose,
+            'notes' => null,
+            'verified_by' => $verifiedBy,
+            'verified_at' => $verifiedAt,
+            'return_condition' => ($status === 'returned') ? $condition : null,
+        ]);
+        
+        if ($status === 'borrowed' || ($status === 'returned' && $condition !== 'rusak berat')) {
+            $equipment->decrement('stock');
+        }
+        
+        // Kembalikan stok jika barang kembali baik
+        if ($status === 'returned' && $condition === 'baik') {
+            $equipment->increment('stock');
         }
 
-        $this->command->info('✅ BorrowingSeeder: Created 5 demo scenarios!');
+        return $borrowing;
     }
 }

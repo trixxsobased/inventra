@@ -15,13 +15,7 @@ class DamagedEquipmentSeeder extends Seeder
         $petugas = User::where('role', 'petugas')->first();
         $admin = User::where('role', 'admin')->first();
         
-        // Get some borrowings that were returned
-        $returnedBorrowings = Borrowing::where('status', 'returned')
-            ->whereNotNull('return_condition')
-            ->limit(3)
-            ->get();
-        
-        // Create damaged equipment records for rusak berat items
+        // Generate data dari history peminjaman
         foreach ($returnedBorrowings as $borrowing) {
             if ($borrowing->return_condition === 'rusak berat') {
                 DamagedEquipment::create([
@@ -29,31 +23,56 @@ class DamagedEquipmentSeeder extends Seeder
                     'borrowing_id' => $borrowing->id,
                     'reported_by' => $petugas->id,
                     'reported_at' => $borrowing->actual_return_date,
-                    'damage_description' => $this->getDamageDescription($borrowing->equipment->category->name),
+                    'damage_description' => $this->getDamageDescription($borrowing->equipment->category->name ?? 'Umum'),
                     'resolution_status' => 'pending',
                     'resolution_notes' => null,
                 ]);
             }
         }
         
-        // Add some older damaged equipment without borrowing reference
-        $damagedEquipments = Equipment::where('condition', 'rusak berat')
-            ->whereNotIn('id', DamagedEquipment::pluck('equipment_id'))
-            ->limit(2)
-            ->get();
+        // Tambahkan data dummy manual jika masih kosong
+        if (DamagedEquipment::count() == 0) {
+            $equipment = Equipment::inRandomOrder()->first();
+            if ($equipment) {
+                // Pinjamkan dulu biar logis
+                $borrowing = Borrowing::create([
+                    'user_id' => $admin->id,
+                    'equipment_id' => $equipment->id,
+                    'borrow_date' => now()->subDays(10),
+                    'planned_return_date' => now()->subDays(5),
+                    'actual_return_date' => now()->subDays(5),
+                    'status' => 'returned',
+                    'return_condition' => 'rusak berat',
+                    'purpose' => 'Rusak saat demo',
+                    'verified_by' => $admin->id,
+                    'verified_at' => now()->subDays(10),
+                ]);
+
+                DamagedEquipment::create([
+                    'equipment_id' => $equipment->id,
+                    'borrowing_id' => $borrowing->id,
+                    'reported_by' => $admin->id,
+                    'reported_at' => now()->subDays(5),
+                    'damage_description' => 'Layar monitor pecah saat dipindahkan.',
+                    'resolution_status' => 'pending',
+                ]);
+            }
+        }
         
-        foreach ($damagedEquipments as $equipment) {
-            DamagedEquipment::create([
-                'equipment_id' => $equipment->id,
+        // Tambahkan data kerusakan lama (tanpa peminjaman)
+        $manualDamage = Equipment::skip(5)->take(2)->get();
+        foreach($manualDamage as $eq) {
+             DamagedEquipment::create([
+                'equipment_id' => $eq->id,
                 'borrowing_id' => null,
                 'reported_by' => $admin->id,
                 'reported_at' => now()->subDays(rand(7, 30)),
-                'damage_description' => $this->getManualDamageDescription($equipment->name),
+                'damage_description' => $this->getManualDamageDescription($eq->name),
                 'resolution_status' => rand(0, 1) ? 'pending' : 'replaced',
                 'resolution_notes' => rand(0, 1) ? null : 'Sudah diajukan pengadaan pengganti',
             ]);
         }
-        
+
         $count = DamagedEquipment::count();
         $this->command->info("✓ Created {$count} Damaged Equipment records");
     }

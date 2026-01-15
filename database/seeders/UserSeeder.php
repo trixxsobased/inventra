@@ -32,12 +32,42 @@ class UserSeeder extends Seeder
 
         User::create([
             'name' => 'Siswa Demo RPL',
-            'username' => 'siswa',
-            'email' => 'siswa@smkn1jenangan.sch.id',
+            'username' => 'siswa-rpl',
+            'email' => 'rpl@smkn1jenangan.sch.id',
             'password' => Hash::make('siswa123'),
             'role' => 'peminjam',
             'phone' => '081234567892',
             'address' => 'Ponorogo',
+        ]);
+
+        User::create([
+            'name' => 'Siswa Demo TKJ',
+            'username' => 'siswa-tkj',
+            'email' => 'tkj@smkn1jenangan.sch.id',
+            'password' => Hash::make('siswa123'),
+            'role' => 'peminjam',
+            'phone' => '081234567893',
+            'address' => 'Madiun',
+        ]);
+
+        User::create([
+            'name' => 'Siswa Demo TPM',
+            'username' => 'siswa-tpm',
+            'email' => 'tpm@smkn1jenangan.sch.id',
+            'password' => Hash::make('siswa123'),
+            'role' => 'peminjam',
+            'phone' => '081234567894',
+            'address' => 'Magetan',
+        ]);
+
+        User::create([
+            'name' => 'Pak Guru Produktif',
+            'username' => 'guru',
+            'email' => 'guru@smkn1jenangan.sch.id',
+            'password' => Hash::make('guru123'),
+            'role' => 'peminjam', // Guru juga meminjam sebagai user biasa
+            'phone' => '081234567895',
+            'address' => 'Ruang Guru',
         ]);
     }
 }

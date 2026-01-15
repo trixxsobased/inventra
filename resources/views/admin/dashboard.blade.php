@@ -126,12 +126,58 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    <a href="{{ route('admin.borrowings.show', $borrowing->id) }}" 
-                                                       class="btn btn-sm btn-primary">
+                                                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#detailModal{{ $borrowing->id }}">
                                                         <i class="bi bi-eye"></i>
-                                                    </a>
+                                                    </button>
                                                 </td>
                                             </tr>
+
+                                            <!-- Detail Modal -->
+                                            <div class="modal fade" id="detailModal{{ $borrowing->id }}" tabindex="-1">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Detail Peminjaman</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="fw-bold">Peminjam:</label>
+                                                                <p>{{ $borrowing->user->name }} ({{ $borrowing->user->email }})</p>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="fw-bold">Alat:</label>
+                                                                <p>{{ $borrowing->equipment->name }} - {{ $borrowing->equipment->code }}</p>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col-6 mb-3">
+                                                                    <label class="fw-bold">Tgl Pinjam:</label>
+                                                                    <p>{{ $borrowing->borrow_date->format('d/m/Y') }}</p>
+                                                                </div>
+                                                                <div class="col-6 mb-3">
+                                                                    <label class="fw-bold">Tgl Kembali:</label>
+                                                                    <p>{{ $borrowing->planned_return_date->format('d/m/Y') }}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="fw-bold">Status:</label>
+                                                                <span class="badge bg-{{ $borrowing->status == 'borrowed' ? 'info' : ($borrowing->status == 'returned' ? 'success' : 'warning') }}">
+                                                                    {{ ucfirst($borrowing->status) }}
+                                                                </span>
+                                                            </div>
+                                                            @if($borrowing->purpose)
+                                                            <div class="mb-3">
+                                                                <label class="fw-bold">Tujuan:</label>
+                                                                <p>{{ $borrowing->purpose }}</p>
+                                                            </div>
+                                                            @endif
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         @empty
                                             <tr>
                                                 <td colspan="5" class="text-center">Belum ada aktivitas</td>
@@ -177,12 +223,44 @@
                 </div>
                 <div class="card-body">
                     @forelse($low_stock_equipment ?? [] as $equipment)
-                        <div class="d-flex align-items-center mb-3">
+                        <div class="d-flex align-items-center mb-3" style="cursor: pointer" data-bs-toggle="modal" data-bs-target="#stockModal{{ $equipment->id }}">
                             <div class="flex-grow-1">
-                                <h6 class="mb-0">{{ $equipment->name }}</h6>
+                                <h6 class="mb-0 text-primary">{{ $equipment->name }}</h6>
                                 <small class="text-muted">Stok: {{ $equipment->stock }}</small>
                             </div>
                             <span class="badge bg-danger">Low</span>
+                        </div>
+
+                        <!-- Stock Modal -->
+                        <div class="modal fade" id="stockModal{{ $equipment->id }}" tabindex="-1">
+                            <div class="modal-dialog modal-sm">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Info Stok</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="text-center mb-3">
+                                            @if($equipment->image)
+                                                <img src="{{ Storage::url($equipment->image) }}" class="img-fluid rounded" style="max-height: 150px">
+                                            @else
+                                                <div class="bg-light p-3 rounded d-inline-block">
+                                                    <i class="bi bi-box fs-1 text-secondary"></i>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <h5>{{ $equipment->name }}</h5>
+                                        <p class="text-muted mb-2">Kode: {{ $equipment->code }}</p>
+                                        <div class="alert alert-danger py-2">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>
+                                            Stok Tersisa: <strong>{{ $equipment->stock }}</strong>
+                                        </div>
+                                        <a href="{{ route('admin.equipment.index', ['search' => $equipment->code]) }}" class="btn btn-primary w-100 btn-sm">
+                                            <i class="bi bi-box-arrow-in-right"></i> Kelola Stok
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     @empty
                         <p class="text-muted mb-0">Semua stok aman</p>
