@@ -48,6 +48,26 @@
                             @enderror
                         </div>
                         
+                        <div class="mb-3">
+                            <label for="return_condition" class="form-label">Kondisi Barang <span class="text-danger">*</span></label>
+                            <select class="form-select @error('return_condition') is-invalid @enderror" 
+                                    id="return_condition" 
+                                    name="return_condition" 
+                                    required>
+                                <option value="">-- Pilih Kondisi --</option>
+                                <option value="baik" {{ old('return_condition') === 'baik' ? 'selected' : '' }}>Baik</option>
+                                <option value="rusak ringan" {{ old('return_condition') === 'rusak ringan' ? 'selected' : '' }}>Rusak Ringan</option>
+                                <option value="rusak berat" {{ old('return_condition') === 'rusak berat' ? 'selected' : '' }}>Rusak Berat</option>
+                            </select>
+                            @error('return_condition')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="alert alert-warning mt-2" id="damaged-warning" style="display: none;">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>Perhatian:</strong> Barang dengan kondisi "Rusak Berat" tidak akan dikembalikan ke stok dan akan masuk ke daftar barang rusak.
+                            </div>
+                        </div>
+                        
                         @if($fineInfo['is_late'])
                             <div class="mb-3">
                                 <div class="form-check">
@@ -111,4 +131,17 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.getElementById('return_condition').addEventListener('change', function() {
+    const warning = document.getElementById('damaged-warning');
+    if (this.value === 'rusak berat') {
+        warning.style.display = 'block';
+    } else {
+        warning.style.display = 'none';
+    }
+});
+</script>
+@endpush
 @endsection

@@ -75,6 +75,19 @@ Route::prefix('admin')
         Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
         Route::post('/fines/{fine}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
         
+        // Purchase Requisitions
+        Route::prefix('purchase-requisitions')->name('purchase-requisitions.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'store'])->name('store');
+            Route::get('/{purchaseRequisition}', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'show'])->name('show');
+            Route::get('/{purchaseRequisition}/edit', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'edit'])->name('edit');
+            Route::put('/{purchaseRequisition}', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'update'])->name('update');
+            Route::delete('/{purchaseRequisition}', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'destroy'])->name('destroy');
+            Route::post('/{purchaseRequisition}/approve', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'approve'])->name('approve');
+            Route::post('/{purchaseRequisition}/reject', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'reject'])->name('reject');
+            Route::get('/{purchaseRequisition}/export-pdf', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'exportPDF'])->name('export-pdf');
+        });
 
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate');

@@ -1,10 +1,12 @@
 <?php
 
+
 namespace App\Services;
 
 use App\Models\Borrowing;
 use App\Models\Equipment;
 use App\Models\User;
+use App\Models\DamagedEquipment;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
@@ -77,8 +79,8 @@ class BorrowingService
         }
     }
 
-    // Proses pengembalian alat + auto tambah stock via trigger
-    public function processReturn(int $borrowingId, string $returnDate, int $verifiedBy): array
+    // Proses pengembalian alat - handle kondisi barang rusak
+    public function processReturn(int $borrowingId, string $returnDate, int $verifiedBy, ?string $returnCondition = null): array
     {
         try {
             DB::beginTransaction();
@@ -89,19 +91,52 @@ class BorrowingService
                 throw new Exception('Peminjaman ini tidak dapat dikembalikan. Status: ' . $borrowing->status);
             }
 
-            // Update status jadi 'returned' - trigger DB auto nambah stock lagi
+            $isSeverelyDamaged = $returnCondition === 'rusak berat';
+            
+            // Update borrowing dengan return condition
             $borrowing->update([
                 'status' => 'returned',
                 'actual_return_date' => $returnDate,
+                'return_condition' => $returnCondition,
             ]);
+
+            $message = 'Pengembalian berhasil diproses.';
+
+            // Handle barang rusak berat - JANGAN restore stock
+            if ($isSeverelyDamaged) {
+                // Create record di damaged_equipment
+                DamagedEquipment::create([
+                    'equipment_id' => $borrowing->equipment_id,
+                    'borrowing_id' => $borrowing->id,
+                    'reported_by' => $verifiedBy,
+                    'reported_at' => now(),
+                    'damage_description' => 'Dikembalikan dalam kondisi rusak berat dari peminjaman #' . $borrowing->id,
+                    'resolution_status' => 'pending',
+                ]);
+
+                // Update kondisi equipment jadi rusak berat
+                $borrowing->equipment->update([
+                    'condition' => 'rusak berat'
+                ]);
+
+                $message = 'Pengembalian berhasil. Barang rusak berat telah dicatat dan tidak dikembalikan ke stok.';
+            } else {
+                // Untuk kondisi baik atau rusak ringan, trigger DB akan auto restore stock
+                if ($returnCondition === 'rusak ringan') {
+                    $message = 'Pengembalian berhasil. Stok telah ditambahkan (kondisi: rusak ringan).';
+                } else {
+                    $message = 'Pengembalian berhasil. Stok telah ditambahkan.';
+                }
+            }
 
             DB::commit();
 
             return [
                 'success' => true,
-                'message' => 'Pengembalian berhasil diproses. Stok telah ditambahkan.',
+                'message' => $message,
                 'borrowing' => $borrowing->fresh(),
-                'current_stock' => $borrowing->equipment->fresh()->stock
+                'current_stock' => $borrowing->equipment->fresh()->stock,
+                'is_damaged' => $isSeverelyDamaged,
             ];
 
         } catch (Exception $e) {

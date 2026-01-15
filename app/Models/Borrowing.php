@@ -15,6 +15,7 @@ class Borrowing extends Model
         'borrow_date',
         'planned_return_date',
         'actual_return_date',
+        'return_condition',
         'status',
         'purpose',
         'notes',
@@ -48,6 +49,11 @@ class Borrowing extends Model
     public function fine(): HasOne
     {
         return $this->hasOne(Fine::class);
+    }
+
+    public function damagedEquipment(): HasOne
+    {
+        return $this->hasOne(DamagedEquipment::class);
     }
 
     public function isLate(): bool

@@ -140,6 +140,7 @@ class BorrowingController extends Controller
     {
         $validated = $request->validate([
             'actual_return_date' => 'required|date',
+            'return_condition' => 'nullable|in:baik,rusak ringan,rusak berat',
             'fine_paid' => 'nullable|boolean',
         ]);
 
@@ -163,10 +164,17 @@ class BorrowingController extends Controller
         $result = $this->borrowingService->processReturn(
             $borrowing->id,
             $validated['actual_return_date'],
-            auth()->id()
+            auth()->id(),
+            $validated['return_condition'] ?? null
         );
 
         if ($result['success']) {
+            // Tambahan alert untuk barang rusak berat
+            if ($result['is_damaged'] ?? false) {
+                return redirect()->route('admin.borrowings.active')
+                    ->with('warning', $result['message'] . ' Silakan buat pengajuan pembelian untuk pengganti.');
+            }
+            
             return redirect()->route('admin.borrowings.active')
                 ->with('success', $result['message']);
         }

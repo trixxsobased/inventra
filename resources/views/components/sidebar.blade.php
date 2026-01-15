@@ -98,6 +98,13 @@
                     </a>
                 </div>
                 
+                <div class="sidebar-item {{ request()->routeIs('admin.purchase-requisitions.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.purchase-requisitions.index') }}" class="sidebar-link">
+                        <i class="bi bi-cart-plus"></i>
+                        <span>Pengajuan Pembelian</span>
+                    </a>
+                </div>
+                
                 <div class="sidebar-title">LAPORAN</div>
                 
                 <div class="sidebar-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
