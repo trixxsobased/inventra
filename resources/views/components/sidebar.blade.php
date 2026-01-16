@@ -120,6 +120,13 @@
                         <span>Barang Rusak</span>
                     </a>
                 </div>
+
+                <div class="sidebar-item {{ request()->routeIs('admin.activity-logs.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.activity-logs.index') }}" class="sidebar-link">
+                        <i class="bi bi-journal-text"></i>
+                        <span>Activity Log</span>
+                    </a>
+                </div>
             @endif
             
             <div class="sidebar-title">AKUN</div>
