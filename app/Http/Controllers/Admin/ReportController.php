@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Borrowing;
 use App\Models\Equipment;
 use App\Models\Fine;
+use App\Exports\EquipmentExport;
+use App\Exports\BorrowingsExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -65,7 +68,10 @@ class ReportController extends Controller
                 $title = 'Laporan Data Peminjaman';
                 
                 if ($format === 'excel') {
-                    return $this->exportBorrowingsToCSV($data, $periodText);
+                    return Excel::download(
+                        new BorrowingsExport($startDate?->toDateString(), $endDate?->toDateString()),
+                        'Laporan_Peminjaman_' . date('Y-m-d') . '.xlsx'
+                    );
                 }
                 
                 return view('admin.reports.borrowings', compact('data', 'title', 'period', 'periodText', 'startDate', 'endDate'));
@@ -86,7 +92,10 @@ class ReportController extends Controller
                 $periodText = 'Per Tanggal ' . Carbon::now()->isoFormat('D MMMM Y');
                 
                 if ($format === 'excel') {
-                    return $this->exportEquipmentToCSV($data, $periodText);
+                    return Excel::download(
+                        new EquipmentExport(),
+                        'Laporan_Inventaris_' . date('Y-m-d') . '.xlsx'
+                    );
                 }
                 
                 return view('admin.reports.equipment', compact('data', 'title', 'period', 'periodText'));

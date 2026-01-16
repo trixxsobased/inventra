@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\FineController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DamagedEquipmentController;
+use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Peminjam\EquipmentBrowseController;
 use App\Http\Controllers\Peminjam\BorrowingController;
 use App\Http\Controllers\ProfileController;
@@ -44,6 +45,13 @@ Route::prefix('admin')
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         
         Route::resource('equipment', EquipmentController::class)->except(['create', 'edit']);
+        
+        // QR Code Routes
+        Route::get('/equipment/{equipment}/qr', [EquipmentController::class, 'generateQR'])->name('equipment.qr');
+        Route::get('/equipment/{equipment}/qr/download', [EquipmentController::class, 'downloadQR'])->name('equipment.qr.download');
+        Route::get('/equipment-qr/bulk', [EquipmentController::class, 'bulkQR'])->name('equipment.qr.bulk');
+        Route::get('/equipment-qr/scan', [EquipmentController::class, 'scanQR'])->name('equipment.qr.scan');
+        
         Route::resource('damaged-equipment', DamagedEquipmentController::class)->only(['index', 'show']);
         Route::resource('categories', CategoryController::class);
 
@@ -83,6 +91,10 @@ Route::prefix('admin')
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
         Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
+
+        // Activity Logs
+        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('/activity-logs/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show');
     });
 
 // Peminjam / Siswa Routes

@@ -7,6 +7,8 @@ use App\Models\Borrowing;
 use App\Models\Equipment;
 use App\Models\User;
 use App\Models\DamagedEquipment;
+use App\Notifications\BorrowingApproved;
+use App\Notifications\BorrowingRejected;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
@@ -45,6 +47,9 @@ class BorrowingService
 
                 DB::commit();
 
+                // Send email notification
+                $borrowing->user->notify(new BorrowingApproved($borrowing->fresh()->load('equipment')));
+
                 return [
                     'success' => true,
                     'message' => 'Peminjaman berhasil diapprove. Stok telah dikurangi.',
@@ -61,6 +66,9 @@ class BorrowingService
                 ]);
 
                 DB::commit();
+
+                // Send email notification
+                $borrowing->user->notify(new BorrowingRejected($borrowing->fresh()->load('equipment')));
 
                 return [
                     'success' => true,

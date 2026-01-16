@@ -7,9 +7,17 @@
 <div class="page-heading">
     <div class="d-flex justify-content-between align-items-center">
         <h3>Daftar Alat</h3>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
-            <i class="bi bi-plus-circle"></i> Tambah Alat
-        </button>
+        <div class="btn-group">
+            <a href="{{ route('admin.equipment.qr.scan') }}" class="btn btn-info">
+                <i class="bi bi-qr-code-scan"></i> Scan QR
+            </a>
+            <a href="{{ route('admin.equipment.qr.bulk') }}" class="btn btn-secondary">
+                <i class="bi bi-printer"></i> Print Semua QR
+            </a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+                <i class="bi bi-plus-circle"></i> Tambah Alat
+            </button>
+        </div>
     </div>
 </div>
 
@@ -87,6 +95,13 @@
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-info"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#qrModal{{ $item->id }}"
+                                                title="QR Code">
+                                            <i class="bi bi-qr-code"></i>
+                                        </button>
                                         <button type="button" 
                                                 class="btn btn-sm btn-warning"
                                                 data-bs-toggle="modal" 
@@ -247,6 +262,49 @@
                                                 </button>
                                             </div>
                                         </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- QR Code Modal -->
+                            <div class="modal fade" id="qrModal{{ $item->id }}" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">
+                                                <i class="bi bi-qr-code me-2"></i>QR Code
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body text-center">
+                                            <div class="mb-3">
+                                                <img src="{{ route('admin.equipment.qr', $item->id) }}" 
+                                                     alt="QR {{ $item->code }}"
+                                                     class="img-fluid"
+                                                     style="max-width: 250px;">
+                                            </div>
+                                            <div class="bg-light rounded p-3 mb-3">
+                                                <h6 class="mb-1">{{ $item->name }}</h6>
+                                                <code class="text-primary">{{ $item->code }}</code>
+                                                <p class="text-muted mb-0 mt-2 small">
+                                                    {{ $item->category->name ?? '-' }} | 
+                                                    Stok: {{ $item->stock }} | 
+                                                    {{ ucfirst($item->condition) }}
+                                                </p>
+                                            </div>
+                                            <p class="text-muted small mb-0">
+                                                Scan QR code ini untuk langsung ke halaman detail alat
+                                            </p>
+                                        </div>
+                                        <div class="modal-footer justify-content-center">
+                                            <a href="{{ route('admin.equipment.qr.download', $item->id) }}" 
+                                               class="btn btn-primary">
+                                                <i class="bi bi-download me-1"></i> Download PNG
+                                            </a>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                Tutup
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

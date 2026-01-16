@@ -16,6 +16,11 @@ class DamagedEquipmentSeeder extends Seeder
         $admin = User::where('role', 'admin')->first();
         
         // Generate data dari history peminjaman
+        $returnedBorrowings = Borrowing::where('status', 'returned')
+            ->whereNotNull('return_condition')
+            ->with('equipment.category')
+            ->get();
+        
         foreach ($returnedBorrowings as $borrowing) {
             if ($borrowing->return_condition === 'rusak berat') {
                 DamagedEquipment::create([
