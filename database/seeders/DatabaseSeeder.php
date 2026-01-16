@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             BorrowingSeeder::class,               // Demo borrowing scenarios (CRITICAL FOR DEMO!)
             DamagedEquipmentSeeder::class,        // Damaged items tracking
             PurchaseRequisitionSeeder::class,     // Purchase requisitions for replacement
+            ActivityLogSeeder::class,             // Activity log demo data
         ]);
     }
 }
