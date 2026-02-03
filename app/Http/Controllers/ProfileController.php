@@ -38,12 +38,10 @@ class ProfileController extends Controller
 
         $user = auth()->user();
 
-        // Hapus avatar lama jika ada
         if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
             Storage::disk('public')->delete($user->avatar);
         }
 
-        // Simpan avatar baru
         $avatarPath = $request->file('avatar')->store('avatars', 'public');
 
         $user->update(['avatar' => $avatarPath]);
@@ -60,12 +58,10 @@ class ProfileController extends Controller
 
         $user = auth()->user();
 
-        // Verifikasi password lama
         if (!Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'Password lama tidak sesuai.']);
         }
 
-        // Update password baru
         $user->update([
             'password' => Hash::make($request->new_password),
         ]);

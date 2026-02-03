@@ -27,8 +27,36 @@ class DamagedEquipmentController extends Controller
 
     public function show(DamagedEquipment $damagedEquipment)
     {
-        // Karena user minta modal, method show return JSON untuk AJAX modal load
-        // Atau kita handle logic di modal index langsung
         return response()->json($damagedEquipment->load(['equipment', 'reportedBy', 'borrowing']));
+    }
+
+    public function resolve(Request $request, DamagedEquipment $damagedEquipment)
+    {
+        $validated = $request->validate([
+            'resolution_action' => 'required|in:repaired,written_off',
+            'resolution_notes' => 'required|string|min:5',
+        ]);
+
+        if ($damagedEquipment->resolution_status !== 'pending') {
+            return redirect()->back()->with('error', 'Laporan kerusakan ini sudah diselesaikan sebelumnya.');
+        }
+
+        $damagedEquipment->update([
+            'resolution_status' => $validated['resolution_action'],
+            'resolution_notes' => $validated['resolution_notes'],
+            'resolved_at' => now(),
+        ]);
+
+        if ($validated['resolution_action'] === 'repaired') {
+            $damagedEquipment->equipment->update([
+                'condition' => 'baik',
+                'stock' => $damagedEquipment->equipment->stock + 1
+            ]);
+            $message = 'Barang berhasil diperbaiki dan stok telah ditambahkan kembali.';
+        } else {
+            $message = 'Barang dinyatakan rusak total/dimusnahkan. Stok tidak ditambahkan.';
+        }
+
+        return redirect()->back()->with('success', $message);
     }
 }

@@ -1,22 +1,21 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Petugas;
 
 use App\Http\Controllers\Controller;
 use App\Models\Borrowing;
+use App\Models\Fine;
 use App\Services\BorrowingService;
 use App\Helpers\FineCalculator;
-use App\Models\Fine;
 use Illuminate\Http\Request;
 
 class BorrowingController extends Controller
 {
-    protected $borrowingService;
-
-    public function __construct(BorrowingService $borrowingService)
-    {
-        $this->borrowingService = $borrowingService;
-    }
+    public function __construct(
+        protected BorrowingService $borrowingService
+    ) {}
 
     public function pending()
     {
@@ -25,7 +24,7 @@ class BorrowingController extends Controller
             ->orderBy('created_at', 'asc')
             ->paginate(15);
 
-        return view('admin.borrowings.pending', compact('borrowings'));
+        return view('petugas.borrowings.pending', compact('borrowings'));
     }
 
     public function active()
@@ -35,24 +34,24 @@ class BorrowingController extends Controller
             ->latest()
             ->paginate(15);
 
-        return view('admin.borrowings.active', compact('borrowings'));
+        return view('petugas.borrowings.active', compact('borrowings'));
     }
 
     public function show(Borrowing $borrowing)
     {
         $borrowing->load(['user', 'equipment', 'verifiedBy', 'fine']);
-        return view('admin.borrowings.show', compact('borrowing'));
+        return view('petugas.borrowings.show', compact('borrowing'));
     }
 
     public function approve(Borrowing $borrowing)
     {
         if ($borrowing->status !== 'pending') {
-            return redirect()->route('admin.borrowings.pending')
+            return redirect()->route('petugas.borrowings.pending')
                 ->with('error', 'Peminjaman ini sudah diproses.');
         }
 
         if ($borrowing->equipment->stock <= 0) {
-            return redirect()->route('admin.borrowings.pending')
+            return redirect()->route('petugas.borrowings.pending')
                 ->with('error', 'Stok alat tidak tersedia.');
         }
 
@@ -64,7 +63,7 @@ class BorrowingController extends Controller
         );
 
         if ($result['success']) {
-            return redirect()->route('admin.borrowings.pending')
+            return redirect()->route('petugas.borrowings.pending')
                 ->with('success', 'Peminjaman berhasil disetujui.');
         }
 
@@ -78,7 +77,7 @@ class BorrowingController extends Controller
         ]);
 
         if ($borrowing->status !== 'pending') {
-            return redirect()->route('admin.borrowings.pending')
+            return redirect()->route('petugas.borrowings.pending')
                 ->with('error', 'Peminjaman ini sudah diproses.');
         }
 
@@ -90,46 +89,17 @@ class BorrowingController extends Controller
         );
 
         if ($result['success']) {
-            return redirect()->route('admin.borrowings.pending')
+            return redirect()->route('petugas.borrowings.pending')
                 ->with('success', 'Peminjaman berhasil ditolak.');
         }
 
         return redirect()->back()->with('error', $result['message']);
     }
 
-    public function verify(Request $request, Borrowing $borrowing)
-    {
-        $validated = $request->validate([
-            'approve' => 'required|boolean',
-            'rejection_reason' => 'required_if:approve,false|nullable|string',
-        ]);
-
-        $result = $this->borrowingService->verifyBorrowing(
-            $borrowing->id,
-            auth()->id(),
-            $validated['approve'],
-            $validated['rejection_reason'] ?? null
-        );
-
-        if ($result['success']) {
-            return redirect()->route('admin.borrowings.pending')
-                ->with('success', $result['message']);
-        }
-
-        return redirect()->back()
-            ->with('error', $result['message']);
-    }
-
-    public function print(Borrowing $borrowing)
-    {
-        $borrowing->load(['user', 'equipment.category', 'verifiedBy', 'fine']);
-        return view('admin.borrowings.print', compact('borrowing'));
-    }
-
     public function showReturn(Borrowing $borrowing)
     {
         if ($borrowing->status !== 'borrowed') {
-            return redirect()->route('admin.borrowings.active')
+            return redirect()->route('petugas.borrowings.active')
                 ->with('error', 'Peminjaman ini tidak dapat dikembalikan.');
         }
 
@@ -138,7 +108,7 @@ class BorrowingController extends Controller
             now()->toDateString()
         );
 
-        return view('admin.borrowings.return', compact('borrowing', 'fineInfo'));
+        return view('petugas.borrowings.return', compact('borrowing', 'fineInfo'));
     }
 
     public function processReturn(Request $request, Borrowing $borrowing)
@@ -175,15 +145,20 @@ class BorrowingController extends Controller
 
         if ($result['success']) {
             if ($result['is_damaged'] ?? false) {
-                return redirect()->route('admin.borrowings.active')
-                    ->with('warning', $result['message'] . ' Silakan buat pengajuan pembelian untuk pengganti.');
+                return redirect()->route('petugas.borrowings.active')
+                    ->with('warning', $result['message'] . ' Laporkan ke Admin untuk penggantian.');
             }
             
-            return redirect()->route('admin.borrowings.active')
+            return redirect()->route('petugas.borrowings.active')
                 ->with('success', $result['message']);
         }
 
-        return redirect()->back()
-            ->with('error', $result['message']);
+        return redirect()->back()->with('error', $result['message']);
+    }
+
+    public function print(Borrowing $borrowing)
+    {
+        $borrowing->load(['user', 'equipment.category', 'verifiedBy', 'fine']);
+        return view('petugas.borrowings.print', compact('borrowing'));
     }
 }

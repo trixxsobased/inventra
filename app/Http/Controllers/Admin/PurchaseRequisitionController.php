@@ -14,17 +14,14 @@ class PurchaseRequisitionController extends Controller
     {
         $query = PurchaseRequisition::with(['requestedBy', 'category', 'equipment', 'reviewedBy']);
         
-        // Search
         if ($request->filled('search')) {
             $query->where('item_name', 'like', '%' . $request->search . '%');
         }
         
-        // Filter by status
         if ($request->has('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
         
-        // Filter by priority
         if ($request->has('priority') && $request->priority !== 'all') {
             $query->where('priority', $request->priority);
         }
@@ -74,7 +71,6 @@ class PurchaseRequisitionController extends Controller
 
     public function edit(PurchaseRequisition $purchaseRequisition)
     {
-        // Hanya bisa edit kalau masih pending
         if ($purchaseRequisition->status !== 'pending') {
             return redirect()->route('admin.purchase-requisitions.show', $purchaseRequisition)
                 ->with('error', 'Pengajuan yang sudah diproses tidak dapat diedit.');
@@ -146,7 +142,6 @@ class PurchaseRequisitionController extends Controller
 
     public function destroy(PurchaseRequisition $purchaseRequisition)
     {
-        // Hanya bisa dihapus kalau masih pending
         if ($purchaseRequisition->status !== 'pending') {
             return redirect()->back()
                 ->with('error', 'Pengajuan yang sudah diproses tidak dapat dihapus.');
@@ -168,5 +163,26 @@ class PurchaseRequisitionController extends Controller
         $filename = 'Surat-Pengadaan-' . $purchaseRequisition->id . '-' . date('Ymd') . '.pdf';
         
         return $pdf->download($filename);
+    }
+
+    public function markAsDone(Request $request, PurchaseRequisition $purchaseRequisition)
+    {
+        if ($purchaseRequisition->status !== 'approved') {
+            return redirect()->back()->with('error', 'Hanya pengajuan yang sudah diapprove (disetujui) yang dapat diproses/diterima.');
+        }
+
+        if ($purchaseRequisition->equipment_id) {
+            $purchaseRequisition->equipment->increment('stock', $purchaseRequisition->quantity);
+            $message = "Barang diterima. Stok {$purchaseRequisition->equipment->name} bertambah {$purchaseRequisition->quantity} unit.";
+        } else {
+            $message = "Barang diterima. Silakan input item baru ini ke Master Data Alat jika belum ada.";
+        }
+
+        $purchaseRequisition->update([
+            'status' => 'received',
+            'updated_at' => now()
+        ]);
+
+        return redirect()->back()->with('success', $message);
     }
 }

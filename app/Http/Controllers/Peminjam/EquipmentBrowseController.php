@@ -14,7 +14,6 @@ class EquipmentBrowseController extends Controller
         $query = Equipment::with('category')
             ->where('condition', 'baik');
 
-        // Pencarian
         if ($request->has('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
@@ -22,7 +21,6 @@ class EquipmentBrowseController extends Controller
             });
         }
         
-        // Filter berdasarkan kategori
         if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }

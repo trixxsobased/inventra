@@ -56,7 +56,6 @@ class EquipmentController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            // Hapus gambar lama jika ada
             if ($equipment->image && Storage::disk('public')->exists($equipment->image)) {
                 Storage::disk('public')->delete($equipment->image);
             }
@@ -73,7 +72,6 @@ class EquipmentController extends Controller
 
     public function destroy(Equipment $equipment)
     {
-        // Hapus gambar jika ada
         if ($equipment->image && Storage::disk('public')->exists($equipment->image)) {
             Storage::disk('public')->delete($equipment->image);
         }
@@ -84,9 +82,6 @@ class EquipmentController extends Controller
             ->with('success', 'Alat berhasil dihapus.');
     }
 
-    /**
-     * Generate QR Code untuk single equipment
-     */
     public function generateQR(Equipment $equipment)
     {
         $url = route('equipment.show', $equipment->id);
@@ -101,9 +96,6 @@ class EquipmentController extends Controller
             ->header('Content-Disposition', 'inline; filename="qr-' . $equipment->code . '.svg"');
     }
 
-    /**
-     * Generate QR Code untuk download PNG
-     */
     public function downloadQR(Equipment $equipment)
     {
         $url = route('equipment.show', $equipment->id);
@@ -118,9 +110,6 @@ class EquipmentController extends Controller
             ->header('Content-Disposition', 'attachment; filename="qr-' . $equipment->code . '.png"');
     }
 
-    /**
-     * Bulk print QR codes
-     */
     public function bulkQR(Request $request)
     {
         $equipmentIds = $request->input('equipment_ids', []);
@@ -143,9 +132,6 @@ class EquipmentController extends Controller
         return view('admin.equipment.bulk-qr', compact('qrCodes'));
     }
 
-    /**
-     * QR Scanner page
-     */
     public function scanQR()
     {
         return view('admin.equipment.scan-qr');

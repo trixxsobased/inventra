@@ -12,22 +12,18 @@ class ActivityLogController extends Controller
     {
         $query = ActivityLog::with('user')->latest();
 
-        // Filter by action
         if ($request->filled('action')) {
             $query->where('action', $request->action);
         }
 
-        // Filter by model type
         if ($request->filled('model_type')) {
             $query->where('model_type', $request->model_type);
         }
 
-        // Filter by user
         if ($request->filled('user_id')) {
             $query->where('user_id', $request->user_id);
         }
 
-        // Filter by date range
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
@@ -37,7 +33,6 @@ class ActivityLogController extends Controller
 
         $logs = $query->paginate(20)->withQueryString();
 
-        // Get unique values for filters
         $actions = ActivityLog::distinct()->pluck('action');
         $modelTypes = ActivityLog::distinct()->pluck('model_type');
 

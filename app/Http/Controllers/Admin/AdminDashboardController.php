@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Equipment;
 use App\Models\Borrowing;
 use App\Models\Fine;
-use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class AdminDashboardController extends Controller
 {
@@ -29,6 +31,32 @@ class AdminDashboardController extends Controller
             ->orderBy('stock', 'asc')
             ->get();
 
-        return view('admin.dashboard', compact('stats', 'recent_borrowings', 'low_stock_equipment'));
+        $monthlyBorrowings = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $count = Borrowing::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->count();
+            $monthlyBorrowings->push([
+                'month' => $date->isoFormat('MMM'),
+                'count' => $count,
+            ]);
+        }
+
+        $borrowingStatus = [
+            'pending' => Borrowing::where('status', 'pending')->count(),
+            'borrowed' => Borrowing::where('status', 'borrowed')->count(),
+            'returned' => Borrowing::where('status', 'returned')->count(),
+            'rejected' => Borrowing::where('status', 'rejected')->count(),
+        ];
+
+        return view('admin.dashboard', compact(
+            'stats', 
+            'recent_borrowings', 
+            'low_stock_equipment',
+            'monthlyBorrowings',
+            'borrowingStatus'
+        ));
     }
 }
+

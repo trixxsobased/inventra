@@ -10,8 +10,9 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         return match(auth()->user()->role) {
-            'admin', 'petugas' => redirect()->route('admin.dashboard'),
-            default => redirect()->route('peminjam.dashboard'), // Dashboard peminjam
+            'admin' => redirect()->route('admin.dashboard'),
+            'petugas' => redirect()->route('petugas.dashboard'),
+            default => redirect()->route('peminjam.dashboard'),
         };
     }
 

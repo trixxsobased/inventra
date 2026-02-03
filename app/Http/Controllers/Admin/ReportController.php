@@ -21,7 +21,6 @@ class ReportController extends Controller
 
     public function generate(Request $request)
     {
-        // Menggunakan query parameters
         $type = $request->query('type');
         $period = $request->query('period', 'all');
         
@@ -142,7 +141,6 @@ class ReportController extends Controller
             ->get();
     }
     
-    // Fungsi helper: Translate status ke Bahasa Indonesia
     private function translateStatus($status)
     {
         $translations = [

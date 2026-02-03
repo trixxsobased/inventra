@@ -22,7 +22,6 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        // Login dengan username atau email
         $loginField = filter_var($credentials['username'], FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
         
         if (Auth::attempt([
@@ -62,7 +61,7 @@ class AuthController extends Controller
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
             'password' => Hash::make($validated['password']),
-            'role' => 'peminjam', // Default role
+            'role' => 'peminjam',
         ]);
 
         Auth::login($user);
