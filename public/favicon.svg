@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#059669"/>
+  <g fill="#ffffff">
+    <!-- Box icon -->
+    <path d="M256 100 L380 170 L380 310 L256 380 L132 310 L132 170 Z" fill="none" stroke="#ffffff" stroke-width="24"/>
+    <path d="M256 240 L256 380" stroke="#ffffff" stroke-width="24"/>
+    <path d="M256 240 L380 170" stroke="#ffffff" stroke-width="24"/>
+    <path d="M256 240 L132 170" stroke="#ffffff" stroke-width="24"/>
+    <!-- Checkmark -->
+    <path d="M200 260 L240 300 L320 220" fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
