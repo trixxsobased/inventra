@@ -119,13 +119,13 @@
                                     <small class="text-muted">{{ $req->requestedBy->name }}</small>
                                 </td>
                                 <td>
-                                    <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#detailModal{{ $req->id }}">
-                                            <i class="bi bi-eye"></i>
+                                    <div class="btn-group rounded-pill shadow-sm" role="group" style="overflow: hidden;">
+                                        <button type="button" class="btn btn-sm btn-info px-3 border-0" data-bs-toggle="modal" data-bs-target="#detailModal{{ $req->id }}" title="Detail">
+                                            <i class="bi bi-info-circle"></i>
                                         </button>
                                         @if($req->status === 'pending')
-                                            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ $req->id }}">
-                                                <i class="bi bi-pencil"></i>
+                                            <button type="button" class="btn btn-sm btn-warning px-3 border-0" data-bs-toggle="modal" data-bs-target="#editModal{{ $req->id }}" title="Edit">
+                                                <i class="bi bi-pencil text-dark"></i>
                                             </button>
                                         @endif
                                     </div>
@@ -156,46 +156,64 @@
     <div class="modal fade" id="detailModal{{ $req->id }}" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title">Detail Pengajuan #{{ $req->id }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <table class="table table-borderless">
-                        <tr><th width="35%">Nama Alat</th><td><strong>{{ $req->item_name }}</strong></td></tr>
-                        <tr><th>Kategori</th><td>{{ $req->category->name }}</td></tr>
-                        <tr><th>Jumlah</th><td>{{ $req->quantity }} unit</td></tr>
-                        <tr><th>Harga/unit</th><td>Rp {{ number_format($req->estimated_price, 0, ',', '.') }}</td></tr>
-                        <tr><th>Total</th><td><strong class="text-primary">Rp {{ number_format($req->estimated_price * $req->quantity, 0, ',', '.') }}</strong></td></tr>
-                    </table>
-                    <hr>
-                    <h6>Justifikasi</h6>
-                    <div class="alert alert-light">{{ $req->justification }}</div>
+                <div class="modal-body pt-4">
+                    <div class="card bg-secondary bg-opacity-10 border-0 mb-4">
+                        <div class="card-body">
+                            <table class="table table-borderless table-sm mb-0">
+                                <tr><td class="text-muted" width="35%">Nama Alat</td><td><strong class="text-dark-emphasis">{{ $req->item_name }}</strong></td></tr>
+                                <tr><td class="text-muted">Kategori</td><td>{{ $req->category->name }}</td></tr>
+                                <tr><td class="text-muted">Jumlah</td><td>{{ $req->quantity }} unit</td></tr>
+                                <tr><td class="text-muted">Harga/unit</td><td>Rp {{ number_format($req->estimated_price, 0, ',', '.') }}</td></tr>
+                                <tr><td class="text-muted">Total</td><td><strong class="text-primary">Rp {{ number_format($req->estimated_price * $req->quantity, 0, ',', '.') }}</strong></td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <h6 class="text-uppercase text-secondary small fw-bold mb-2">Justifikasi</h6>
+                    <div class="p-3 rounded bg-secondary bg-opacity-10 border border-secondary border-opacity-10 mb-4">
+                        {{ $req->justification }}
+                    </div>
+
                     @if($req->reviewed_at)
-                        <hr>
-                        <h6>Review</h6>
-                        <p class="mb-1"><strong>Oleh:</strong> {{ $req->reviewedBy->name }} <small>({{ $req->reviewed_at->format('d/m/Y H:i') }})</small></p>
-                        @if($req->review_notes)
-                            <div class="alert alert-{{ $req->status === 'approved' ? 'success' : 'danger' }}">{{ $req->review_notes }}</div>
-                        @endif
+                        <h6 class="text-uppercase text-secondary small fw-bold mb-2">Review</h6>
+                        <div class="p-3 rounded bg-light bg-opacity-5 border border-secondary border-opacity-10">
+                            <p class="mb-1"><small class="text-muted">Oleh:</small> <strong>{{ $req->reviewedBy->name }}</strong> <small class="text-muted">({{ $req->reviewed_at->format('d/m/Y H:i') }})</small></p>
+                            @if($req->review_notes)
+                                <div class="mt-2 text-{{ $req->status === 'approved' ? 'success' : 'danger' }}">
+                                    <i class="bi bi-chat-quote-fill me-1"></i> {{ $req->review_notes }}
+                                </div>
+                            @endif
+                        </div>
                     @endif
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer border-0 pt-0 pb-4">
                     @if($req->status === 'pending' && auth()->user()->role === 'admin')
-                        <form action="{{ route('admin.purchase-requisitions.approve', $req) }}" method="POST" class="d-inline">
+                        <form action="{{ route('admin.purchase-requisitions.approve', $req) }}" method="POST" class="d-inline" onsubmit="event.preventDefault(); confirmAction(this, {title: 'Setujui Pengajuan?', text: 'Pengajuan pembelian {{ $req->item_name }} ({{ $req->quantity }} unit) akan disetujui.', icon: 'question', confirmButtonText: '<i class=\'bi bi-check-circle me-1\'></i> Ya, Setujui', confirmButtonColor: '#059669'})">
                             @csrf
-                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Approve?')">
+                            <button type="submit" class="btn btn-success rounded-pill px-3">
                                 <i class="bi bi-check-circle"></i> Approve
                             </button>
                         </form>
-                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $req->id }}">
+                        <button type="button" class="btn btn-danger rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $req->id }}">
                             <i class="bi bi-x-circle"></i> Reject
                         </button>
                     @endif
-                    <a href="{{ route('admin.purchase-requisitions.export-pdf', $req) }}" class="btn btn-danger btn-sm" target="_blank">
-                        <i class="bi bi-file-pdf"></i> Cetak PDF
+                    @if($req->status === 'approved' && auth()->user()->role === 'admin')
+                        <form action="{{ route('admin.purchase-requisitions.receive', $req) }}" method="POST" class="d-inline" onsubmit="event.preventDefault(); confirmAction(this, {title: 'Terima Barang?', text: 'Konfirmasi penerimaan barang {{ $req->item_name }} sejumlah {{ $req->quantity }}. Stok akan otomatis bertambah.', icon: 'question', confirmButtonText: '<i class=\'bi bi-box-seam me-1\'></i> Ya, Terima Barang', confirmButtonColor: '#059669'})">
+                            @csrf
+                            <button type="submit" class="btn btn-primary rounded-pill px-3">
+                                <i class="bi bi-box-seam"></i> Terima Barang
+                            </button>
+                        </form>
+                    @endif
+                    <a href="{{ route('admin.purchase-requisitions.export-pdf', $req) }}" class="btn btn-outline-danger rounded-pill px-3" target="_blank">
+                        <i class="bi bi-file-pdf"></i> PDF
                     </a>
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Tutup</button>
                 </div>
             </div>
         </div>
@@ -208,23 +226,27 @@
             <div class="modal-content">
                 <form action="{{ route('admin.purchase-requisitions.reject', $req) }}" method="POST">
                     @csrf
-                    <div class="modal-header">
-                        <h5 class="modal-title">Reject Pengajuan #{{ $req->id }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle"></i> Yakin tolak pengajuan ini?
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-danger">Tolak Pengajuan #{{ $req->id }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-4">
+                    <div class="text-center mb-4">
+                        <div class="avatar bg-danger bg-opacity-10 text-danger rounded-circle p-3 d-inline-flex mb-3">
+                            <i class="bi bi-exclamation-triangle-fill fs-3"></i>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Alasan <span class="text-danger">*</span></label>
-                            <textarea name="review_notes" class="form-control" rows="3" required></textarea>
-                        </div>
+                        <h5>Yakin tolak pengajuan ini?</h5>
+                        <p class="text-muted">Tindakan ini tidak dapat dibatalkan.</p>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle"></i> Reject</button>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">ALASAN PENOLAKAN <span class="text-danger">*</span></label>
+                        <textarea name="review_notes" class="form-control" rows="3" required placeholder="Berikan alasan yang jelas..."></textarea>
                     </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pb-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4"><i class="bi bi-x-circle"></i> Tolak</button>
+                </div>
                 </form>
             </div>
         </div>
@@ -239,10 +261,10 @@
                 <form action="{{ route('admin.purchase-requisitions.update', $req) }}" method="POST">
                     @csrf
                     @method('PUT')
-                    <div class="modal-header">
-                        <h5 class="modal-title">Edit Pengajuan #{{ $req->id }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title">Edit Pengajuan #{{ $req->id }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -292,9 +314,9 @@
                             <textarea class="form-control" name="justification" rows="4" required>{{ $req->justification }}</textarea>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Simpan</button>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary rounded-pill"><i class="bi bi-save"></i> Simpan Perubahan</button>
                     </div>
                 </form>
             </div>
@@ -309,9 +331,9 @@
         <div class="modal-content">
             <form action="{{ route('admin.purchase-requisitions.store') }}" method="POST">
                 @csrf
-                <div class="modal-header">
+                <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title">Buat Pengajuan Baru</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
@@ -374,9 +396,9 @@
                         @error('justification')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Ajukan</button>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary rounded-pill"><i class="bi bi-send"></i> Ajukan</button>
                 </div>
             </form>
         </div>

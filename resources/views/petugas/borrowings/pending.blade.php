@@ -45,60 +45,61 @@
                                 $totalQueued = $borrowing->equipment->pending_count;
                                 $currentStock = $borrowing->equipment->stock;
                                 $isStockCritical = $currentStock < $totalQueued;
-                                $isOutOfOrder = $queuePosition > $currentStock; // Jika antrian ke-3 tapi stok cuma 2, berarti dia "Out of Order" untuk dapat barang
-                            @endphp
-                            @php
-                                // ... previous logic ...
-                                $queuePosition = $borrowing->equipment->pendingBorrowings->where('created_at', '<', $borrowing->created_at)->count() + 1;
-                                $totalQueued = $borrowing->equipment->pending_count;
-                                $currentStock = $borrowing->equipment->stock;
-                                $isStockCritical = $currentStock < $totalQueued;
                                 $isOutOfOrder = $queuePosition > $currentStock;
                             @endphp
                             <tr class="{{ $isOutOfOrder && $isStockCritical ? 'bg-warning bg-opacity-10 border-warning' : '' }}">
                                 <td>
-                                    <!-- ... same content ... -->
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="position-relative">
-                                            <i class="bi bi-person-circle fs-4 text-muted"></i>
+                                            <div class="avatar avatar-md bg-light-primary text-primary">
+                                                <i class="bi bi-person-circle fs-5"></i>
+                                            </div>
                                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary border border-light">
                                                 #{{ $queuePosition }}
                                             </span>
                                         </div>
                                         <div>
-                                            <strong>{{ $borrowing->user->name }}</strong><br>
+                                            <h6 class="mb-0">{{ $borrowing->user->name }}</h6>
                                             <small class="text-muted">{{ $borrowing->user->email }}</small>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <!-- ... same content ... -->
                                     <div class="d-flex align-items-center gap-2">
-                                        <i class="bi bi-box-seam text-muted"></i>
+                                        <div class="avatar avatar-md bg-light-info text-info">
+                                            <i class="bi bi-box-seam fs-5"></i>
+                                        </div>
                                         <div>
-                                            <strong>{{ $borrowing->equipment->name }}</strong>
-                                            
-                                            <div class="d-flex gap-2 mt-1">
+                                            <h6 class="mb-0">{{ $borrowing->equipment->name }}</h6>
+                                            <div class="d-flex align-items-center gap-2 mt-1">
                                                 <span class="badge bg-secondary">Stok: {{ $currentStock }}</span>
                                                 <span class="badge bg-info text-dark">Antrian: {{ $totalQueued }}</span>
                                             </div>
-
+                                            
                                             @if($isStockCritical)
                                                 <small class="text-danger d-block mt-1">
                                                     <i class="bi bi-exclamation-triangle"></i> Stok Kritis!
                                                 </small>
                                             @endif
                                             
-                                            <small class="text-muted">{{ $borrowing->equipment->code }}</small>
+                                            <div class="mt-1">
+                                                <small class="text-muted">{{ $borrowing->equipment->code }}</small>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <!-- ... same content ... -->
-                                    <i class="bi bi-calendar3 text-muted"></i>
-                                    {{ $borrowing->borrow_date->format('d M') }} → {{ $borrowing->planned_return_date->format('d M Y') }}
-                                    <br>
-                                    <small class="text-muted"><i class="bi bi-clock"></i> {{ $duration }} hari · {{ $borrowing->created_at->diffForHumans() }}</small>
+                                    <div class="d-flex flex-column">
+                                        <span class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-calendar-range text-muted"></i>
+                                            {{ $borrowing->borrow_date->format('d M') }} - {{ $borrowing->planned_return_date->format('d M Y') }}
+                                        </span>
+                                        <small class="text-muted ms-4">
+                                            <i class="bi bi-clock"></i> {{ $duration }} hari
+                                            <span class="mx-1">•</span>
+                                            {{ $borrowing->created_at->diffForHumans() }}
+                                        </small>
+                                    </div>
                                 </td>
                                 <td class="text-end">
                                     <div class="btn-group rounded-pill shadow-sm" role="group" style="overflow: hidden;">
@@ -126,9 +127,8 @@
                                             <i class="bi bi-x-lg"></i>
                                         </button>
                                     </div>
-                                    <!-- Forms ... -->
                                     <form id="approve-form-{{ $borrowing->id }}" 
-                                          action="{{ route('admin.borrowings.approve', $borrowing->id) }}" 
+                                          action="{{ route('petugas.borrowings.approve', $borrowing->id) }}" 
                                           method="POST" 
                                           class="d-none"
                                           onsubmit="return confirmAction(this, {title: 'Setujui Peminjaman?', text: 'Antrian #{{ $queuePosition }} - {{ $borrowing->equipment->name }}', icon: 'question', confirmButtonText: 'Ya, Setujui', confirmButtonColor: '#198754'})">
@@ -137,7 +137,7 @@
                                     </form>
                                 </td>
                             </tr>
-
+                            
                             <!-- Queue Warning Modal -->
                             <div class="modal fade" id="queueWarningModal{{ $borrowing->id }}" tabindex="-1">
                                 <div class="modal-dialog modal-dialog-centered">
@@ -177,12 +177,11 @@
                                 </div>
                             </div>
 
-
                             <!-- Reject Modal -->
                             <div class="modal fade" id="rejectModal{{ $borrowing->id }}" tabindex="-1">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
-                                        <form action="{{ route('admin.borrowings.reject', $borrowing->id) }}" method="POST">
+                                        <form action="{{ route('petugas.borrowings.reject', $borrowing->id) }}" method="POST">
                                             @csrf
                                             @method('PUT')
                                             <div class="modal-header border-0 pb-0">
@@ -222,8 +221,13 @@
                         @empty
                             <tr>
                                 <td colspan="4" class="text-center py-4">
-                                    <i class="bi bi-inbox fs-2 text-muted"></i>
-                                    <p class="text-muted mt-2">Tidak ada peminjaman yang perlu diverifikasi</p>
+                                    <div class="d-flex flex-column align-items-center justify-content-center">
+                                        <div class="avatar avatar-xl bg-light-primary text-primary mb-3">
+                                            <i class="bi bi-inbox fs-1"></i>
+                                        </div>
+                                        <h5 class="text-muted">Tidak ada peminjaman</h5>
+                                        <p class="text-muted small">Semua permohonan telah diproses</p>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse

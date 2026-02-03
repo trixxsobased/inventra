@@ -45,13 +45,15 @@
                     <label class="form-label">Sampai Tanggal</label>
                     <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary me-2">
-                        <i class="bi bi-filter"></i> Filter
+                <div class="col-md-2 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Cari
                     </button>
-                    <a href="{{ route('admin.activity-logs.index') }}" class="btn btn-secondary">
-                        <i class="bi bi-x-circle"></i> Reset
-                    </a>
+                    @if(request()->hasAny(['action', 'model_type', 'date_from', 'date_to']))
+                        <a href="{{ route('admin.activity-logs.index') }}" class="btn btn-outline-secondary" title="Reset Filter">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    @endif
                 </div>
             </form>
         </div>
@@ -67,13 +69,24 @@
                             <th width="15%">Waktu</th>
                             <th width="15%">User</th>
                             <th width="10%">Aksi</th>
-                            <th width="15%">Model</th>
+                            <th width="20%">Model</th>
                             <th>Deskripsi</th>
                             <th width="5%"></th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($logs as $log)
+                            @php
+                                $actionIcons = [
+                                    'created' => 'plus-circle',
+                                    'updated' => 'pencil',
+                                    'deleted' => 'trash',
+                                    'approved' => 'check-circle',
+                                    'rejected' => 'x-circle',
+                                    'returned' => 'arrow-return-left',
+                                ];
+                                $icon = $actionIcons[$log->action] ?? 'record-circle';
+                            @endphp
                             <tr>
                                 <td>
                                     <small class="text-muted">
@@ -91,7 +104,7 @@
                                 </td>
                                 <td>
                                     <span class="badge bg-{{ $log->action_color }}">
-                                        {{ $log->action_label }}
+                                        <i class="bi bi-{{ $icon }}"></i> {{ $log->action_label }}
                                     </span>
                                 </td>
                                 <td>
@@ -100,16 +113,17 @@
                                         <br><small class="text-muted">{{ Str::limit($log->model_label, 30) }}</small>
                                     @endif
                                 </td>
+                                <td>{{ Str::limit($log->description, 50) ?? '-' }}</td>
                                 <td>
-                                    {{ $log->description ?? '-' }}
-                                </td>
-                                <td>
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-primary"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#detailModal{{ $log->id }}">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
+                                    <div class="btn-group rounded-pill shadow-sm" role="group" style="overflow: hidden;">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-info px-3 border-0"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#detailModal{{ $log->id }}"
+                                                title="Detail Log">
+                                            <i class="bi bi-info-circle"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -131,7 +145,7 @@
     </div>
 </div>
 
-<!-- Detail Modals (di luar table) -->
+<!-- Detail Modals -->
 @foreach($logs as $log)
 <div class="modal fade" id="detailModal{{ $log->id }}" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">

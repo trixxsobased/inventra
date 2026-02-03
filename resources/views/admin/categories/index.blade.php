@@ -51,24 +51,28 @@
                                     <span class="badge bg-primary">{{ $category->equipment_count }} alat</span>
                                 </td>
                                 <td>
-                                    <div class="btn-group" role="group">
+                                    <div class="btn-group rounded-pill shadow-sm" role="group" style="overflow: hidden;">
                                         <button type="button" 
-                                                class="btn btn-sm btn-warning"
+                                                class="btn btn-sm btn-warning px-3 border-0"
                                                 data-bs-toggle="modal" 
-                                                data-bs-target="#editModal{{ $category->id }}">
-                                            <i class="bi bi-pencil"></i>
+                                                data-bs-target="#editModal{{ $category->id }}"
+                                                title="Edit">
+                                            <i class="bi bi-pencil text-dark"></i>
                                         </button>
-                                        <form action="{{ route('admin.categories.destroy', $category->id) }}" 
-                                              method="POST" 
-                                              class="d-inline"
-                                              onsubmit="return confirm('Yakin ingin menghapus kategori ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-danger px-3 border-0" 
+                                                title="Hapus"
+                                                onclick="var form = document.getElementById('delete-form-{{ $category->id }}'); confirmAction(form, {title: 'Hapus Kategori?', text: 'Kategori {{ $category->name }} akan dihapus. Pastikan tidak ada alat yang terkait dengan kategori ini.', icon: 'danger', confirmButtonText: '<i class=\'bi bi-trash me-1\'></i> Ya, Hapus', confirmButtonColor: '#dc2626'})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     </div>
+                                    <form id="delete-form-{{ $category->id }}" 
+                                          action="{{ route('admin.categories.destroy', $category->id) }}" 
+                                          method="POST" 
+                                          class="d-none">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
                                 </td>
                             </tr>
 

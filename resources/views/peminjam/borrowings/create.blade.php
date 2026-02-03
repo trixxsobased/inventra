@@ -16,7 +16,7 @@
                     <h4 class="card-title">Detail Peminjaman</h4>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('now borrowings.store') }}" method="POST">
+                    <form action="{{ route('borrowings.store') }}" method="POST">
                         @csrf
                         <input type="hidden" name="equipment_id" value="{{ $equipment->id }}">
                         

@@ -139,7 +139,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{{ route('admin.borrowings.print', $borrowing->id) }}" target="_blank" class="btn btn-outline-primary">
+                        <a href="{{ route('petugas.borrowings.print', $borrowing->id) }}" target="_blank" class="btn btn-outline-primary">
                             <i class="bi bi-printer"></i> Cetak Bukti
                         </a>
                         <a href="{{ url()->previous() }}" class="btn btn-secondary">
@@ -147,7 +147,7 @@
                         </a>
                         
                         @if($borrowing->status === 'pending')
-                            <a href="{{ route('admin.borrowings.pending') }}" class="btn btn-warning">
+                            <a href="{{ route('petugas.borrowings.pending') }}" class="btn btn-warning">
                                 <i class="bi bi-clock"></i> Ke Halaman Verifikasi
                             </a>
                         @endif

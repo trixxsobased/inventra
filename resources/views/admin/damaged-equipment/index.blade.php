@@ -46,9 +46,11 @@
                             <td>{{ $item->reportedBy->name ?? 'Sistem' }}</td>
                             <td>{{ Str::limit($item->description, 50) }}</td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#detailModal{{ $item->id }}">
-                                    <i class="bi bi-eye"></i> Detail
-                                </button>
+                                <div class="btn-group rounded-pill shadow-sm" role="group" style="overflow: hidden;">
+                                    <button type="button" class="btn btn-sm btn-info px-3 border-0" data-bs-toggle="modal" data-bs-target="#detailModal{{ $item->id }}" title="Detail">
+                                        <i class="bi bi-info-circle"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
 
@@ -83,8 +85,48 @@
                                         </div>
                                         @endif
                                     </div>
-                                    <div class="modal-footer">
+                                    <div class="modal-footer justify-content-between">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                        @if($item->resolution_status === 'pending')
+                                            <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#resolveForm{{ $item->id }}">
+                                                <i class="bi bi-tools"></i> Tindak Lanjut
+                                            </button>
+                                        @else
+                                            <span class="badge bg-{{ $item->resolution_status === 'repaired' ? 'success' : 'dark' }}">
+                                                {{ $item->resolution_status === 'repaired' ? 'Diperbaiki' : 'Dihapuskan' }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    
+                                    <!-- Resolution Form Collapse -->
+                                    <div class="collapse p-3 bg-light border-top" id="resolveForm{{ $item->id }}">
+                                        @if($item->resolution_status === 'pending')
+                                        <form action="{{ route('admin.damaged-equipment.resolve', $item->id) }}" method="POST">
+                                            @csrf
+                                            @method('PUT')
+                                            <div class="mb-3">
+                                                <label class="form-label">Tindakan <span class="text-danger">*</span></label>
+                                                <select name="resolution_action" class="form-select" required>
+                                                    <option value="">-- Pilih Tindakan --</option>
+                                                    <option value="repaired">Perbaikan Selesai (Restock)</option>
+                                                    <option value="written_off">Musnahkan / Tulis Hapus (Hapus dari Aset)</option>
+                                                </select>
+                                                <div class="form-text text-muted">
+                                                    "Perbaikan Selesai" akan mengembalikan stok barang (+1).
+                                                    <br>"Musnahkan" akan membiarkan stok berkurang permanen.
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Catatan Penyelesaian <span class="text-danger">*</span></label>
+                                                <textarea name="resolution_notes" class="form-control" rows="2" required placeholder="Contoh: Diganti sparepart baru, atau dibuang karena hancur total."></textarea>
+                                            </div>
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-success" onclick="return confirm('Pastikan tindakan sudah benar. Data stok akan disesuaikan.')">
+                                                    Simpan Penyelesaian
+                                                </button>
+                                            </div>
+                                        </form>
+                                        @endif
                                     </div>
                                 </div>
                             </div>

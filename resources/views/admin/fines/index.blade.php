@@ -67,7 +67,7 @@
                                     @if(!$fine->is_paid)
                                         <form action="{{ route('admin.fines.pay', $fine->id) }}" 
                                               method="POST"
-                                              onsubmit="return confirm('Tandai denda ini sebagai lunas?')">
+                                              onsubmit="event.preventDefault(); confirmAction(this, {title: 'Tandai Lunas?', text: 'Denda sebesar {{ $fine->formatted_amount }} akan ditandai sebagai sudah dibayar.', icon: 'question', confirmButtonText: '<i class=\'bi bi-cash-coin me-1\'></i> Ya, Tandai Lunas', confirmButtonColor: '#059669'})">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-success">
                                                 <i class="bi bi-cash"></i> Tandai Lunas

@@ -67,30 +67,36 @@
                                 </td>
                                 <td>{{ $user->phone ?? '-' }}</td>
                                 <td>
-                                    <div class="btn-group" role="group">
+                                    <div class="btn-group rounded-pill shadow-sm" role="group" style="overflow: hidden;">
                                         <button type="button" 
-                                                class="btn btn-sm btn-warning"
+                                                class="btn btn-sm btn-warning px-3 border-0"
                                                 data-bs-toggle="modal" 
-                                                data-bs-target="#editModal{{ $user->id }}">
-                                            <i class="bi bi-pencil"></i>
+                                                data-bs-target="#editModal{{ $user->id }}"
+                                                title="Edit">
+                                            <i class="bi bi-pencil text-dark"></i>
                                         </button>
                                         @if($user->id !== auth()->id())
-                                        <form action="{{ route('admin.users.destroy', $user->id) }}" 
-                                              method="POST" 
-                                              class="d-inline"
-                                              onsubmit="return confirm('Yakin ingin menghapus user ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-danger px-3 border-0" 
+                                                title="Hapus"
+                                                onclick="var form = document.getElementById('delete-form-{{ $user->id }}'); confirmAction(form, {title: 'Hapus Pengguna?', text: 'Data pengguna {{ $user->name }} akan dihapus secara permanen dan tidak dapat dikembalikan.', icon: 'danger', confirmButtonText: '<i class=\'bi bi-trash me-1\'></i> Ya, Hapus', confirmButtonColor: '#dc2626'})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                         @else
-                                        <button type="button" class="btn btn-sm btn-secondary" disabled title="Tidak dapat menghapus akun sendiri">
+                                        <button type="button" class="btn btn-sm btn-secondary px-3 border-0" disabled title="Tidak dapat menghapus akun sendiri">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                         @endif
                                     </div>
+                                    @if($user->id !== auth()->id())
+                                    <form id="delete-form-{{ $user->id }}" 
+                                          action="{{ route('admin.users.destroy', $user->id) }}" 
+                                          method="POST" 
+                                          class="d-none">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                    @endif
                                 </td>
                             </tr>
 
@@ -162,13 +168,23 @@
                                                 <div class="row">
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Role <span class="text-danger">*</span></label>
-                                                        <select class="form-select @error('role') is-invalid @enderror" 
-                                                                name="role" 
-                                                                required>
-                                                            <option value="peminjam" {{ old('role', $user->role) === 'peminjam' ? 'selected' : '' }}>Peminjam</option>
-                                                            <option value="petugas" {{ old('role', $user->role) === 'petugas' ? 'selected' : '' }}>Petugas</option>
-                                                            <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
-                                                        </select>
+                                                        @if($user->id === 1)
+                                                            <input type="text" class="form-control" value="Admin (Superadmin)" readonly>
+                                                            <input type="hidden" name="role" value="admin">
+                                                            <small class="text-muted">Akun superadmin tidak dapat diubah</small>
+                                                        @else
+                                                            <select class="form-select @error('role') is-invalid @enderror" 
+                                                                    name="role" 
+                                                                    required>
+                                                                <option value="peminjam" {{ old('role', $user->role) === 'peminjam' ? 'selected' : '' }}>Peminjam</option>
+                                                                @if(auth()->id() === 1)
+                                                                    <option value="petugas" {{ old('role', $user->role) === 'petugas' ? 'selected' : '' }}>Petugas</option>
+                                                                @endif
+                                                            </select>
+                                                            @if(auth()->id() !== 1)
+                                                                <small class="text-muted">Hanya Superadmin yang dapat membuat role Petugas</small>
+                                                            @endif
+                                                        @endif
                                                         @error('role')
                                                             <div class="invalid-feedback">{{ $message }}</div>
                                                         @enderror
@@ -304,9 +320,13 @@
                                     required>
                                 <option value="">Pilih Role</option>
                                 <option value="peminjam" {{ old('role') === 'peminjam' ? 'selected' : '' }}>Peminjam</option>
-                                <option value="petugas" {{ old('role') === 'petugas' ? 'selected' : '' }}>Petugas</option>
-                                <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
+                                @if(auth()->id() === 1)
+                                    <option value="petugas" {{ old('role') === 'petugas' ? 'selected' : '' }}>Petugas</option>
+                                @endif
                             </select>
+                            @if(auth()->id() !== 1)
+                                <small class="text-muted">Hanya Superadmin yang dapat membuat role Admin/Petugas</small>
+                            @endif
                             @error('role')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

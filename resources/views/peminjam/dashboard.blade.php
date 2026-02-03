@@ -104,89 +104,72 @@
     <section class="row">
         <div class="col-12">
             <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0"><i class="bi bi-list-check me-2"></i>Peminjaman Aktif Saya</h4>
-                        <a href="{{ route('borrowings.index') }}" class="btn btn-sm btn-primary">
-                            <i class="bi bi-eye"></i> Lihat Semua
-                        </a>
-                    </div>
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0 card-title"><i class="bi bi-list-check me-2"></i>Peminjaman Aktif Saya</h4>
+                    <a href="{{ route('borrowings.index') }}" class="btn btn-primary rounded-pill btn-sm px-4">
+                        <i class="bi bi-eye me-1"></i> Lihat Semua
+                    </a>
                 </div>
-                <div class="card-body p-4">
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-light">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-body-tertiary">
                                 <tr>
-                                    <th>Alat</th>
-                                    <th>Tanggal Pinjam</th>
-                                    <th>Tanggal Kembali</th>
-                                    <th>Status</th>
-                                    <th>Sisa Waktu</th>
+                                    <th class="px-4 py-3 text-secondary text-uppercase small fw-bold">Alat</th>
+                                    <th class="px-4 py-3 text-secondary text-uppercase small fw-bold">Tanggal Pinjam</th>
+                                    <th class="px-4 py-3 text-secondary text-uppercase small fw-bold">Tanggal Kembali</th>
+                                    <th class="px-4 py-3 text-secondary text-uppercase small fw-bold">Status</th>
+                                    <th class="px-4 py-3 text-secondary text-uppercase small fw-bold">Sisa Waktu</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($active_borrowings ?? [] as $borrowing)
                                     <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="me-3">
-                                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                                        <i class="bi bi-tools text-primary"></i>
-                                                    </div>
+                                        <td class="px-4">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="avatar avatar-lg bg-secondary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-3 p-2">
+                                                    <i class="bi bi-tools fs-4"></i>
                                                 </div>
                                                 <div>
-                                                    <strong>{{ $borrowing->equipment->name }}</strong><br>
-                                                    <small class="text-muted"><code>{{ $borrowing->equipment->code }}</code></small>
+                                                    <h6 class="mb-0 fw-bold">{{ $borrowing->equipment->name }}</h6>
+                                                    <small class="text-muted">{{ $borrowing->equipment->code }}</small>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ $borrowing->borrow_date ? $borrowing->borrow_date->format('d/m/Y') : '-' }}</td>
-                                        <td>{{ $borrowing->planned_return_date->format('d/m/Y') }}</td>
-                                        <td>
+                                        <td class="px-4">{{ $borrowing->borrow_date ? $borrowing->borrow_date->format('d/m/Y') : '-' }}</td>
+                                        <td class="px-4">{{ $borrowing->planned_return_date->format('d/m/Y') }}</td>
+                                        <td class="px-4">
                                             @if($borrowing->status === 'pending')
-                                                <span class="badge bg-warning text-dark">
-                                                    <i class="bi bi-clock me-1"></i>Menunggu Verifikasi
+                                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2">
+                                                    <i class="bi bi-clock me-1"></i> Menunggu
                                                 </span>
                                             @elseif($borrowing->status === 'borrowed')
-                                                <span class="badge bg-info">
-                                                    <i class="bi bi-box-arrow-down me-1"></i>Dipinjam
+                                                <span class="badge bg-info bg-opacity-10 text-info rounded-pill px-3 py-2">
+                                                    <i class="bi bi-box-arrow-down me-1"></i> Dipinjam
                                                 </span>
                                             @else
-                                                <span class="badge bg-success">
-                                                    <i class="bi bi-check-circle me-1"></i>{{ ucfirst($borrowing->status) }}
+                                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">
+                                                    <i class="bi bi-check-circle me-1"></i> {{ ucfirst($borrowing->status) }}
                                                 </span>
                                             @endif
                                         </td>
-                                        <td>
+                                        <td class="px-4">
                                             @php
-                                                // FIX: Use ceil() to round UP and avoid decimals
                                                 $daysLeftRaw = now()->diffInDays($borrowing->planned_return_date, false);
                                                 $daysLeft = ceil($daysLeftRaw);
                                             @endphp
                                             
                                             @if($daysLeft < 0)
-                                                
-                                                <span class="badge bg-danger">
-                                                    <i class="bi bi-exclamation-triangle me-1"></i>
-                                                    Telat {{ abs($daysLeft) }} hari
+                                                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2">
+                                                    <i class="bi bi-exclamation-triangle me-1"></i> Telat {{ abs($daysLeft) }} hari
                                                 </span>
                                             @elseif($daysLeft == 0)
-                                                
-                                                <span class="badge bg-warning text-dark">
-                                                    <i class="bi bi-calendar-event me-1"></i>
-                                                    Hari Ini
-                                                </span>
-                                            @elseif($daysLeft <= 3)
-                                                
-                                                <span class="badge bg-warning text-dark">
-                                                    <i class="bi bi-hourglass-split me-1"></i>
-                                                    {{ $daysLeft }} hari lagi
+                                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2">
+                                                    <i class="bi bi-calendar-event me-1"></i> Hari Ini
                                                 </span>
                                             @else
-                                                
-                                                <span class="badge bg-success">
-                                                    <i class="bi bi-check-circle me-1"></i>
-                                                    {{ $daysLeft }} hari lagi
+                                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">
+                                                    <i class="bi bi-check-circle me-1"></i> {{ $daysLeft }} hari lagi
                                                 </span>
                                             @endif
                                         </td>
@@ -194,11 +177,13 @@
                                 @empty
                                     <tr>
                                         <td colspan="5" class="text-center py-5">
-                                            <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-                                            <p class="text-muted mb-0">Anda belum memiliki peminjaman aktif</p>
-                                            <a href="{{ route('equipment.browse') }}" class="btn btn-sm btn-primary mt-3">
-                                                <i class="bi bi-plus-circle"></i> Pinjam Alat
-                                            </a>
+                                            <div class="empty-state">
+                                                <i class="bi bi-inbox fs-1 text-muted mb-3 d-block"></i>
+                                                <h6 class="text-muted mb-2">Belum ada peminjaman aktif</h6>
+                                                <a href="{{ route('equipment.browse') }}" class="btn btn-primary rounded-pill btn-sm px-4 mt-2">
+                                                    <i class="bi bi-plus-lg me-1"></i> Pinjam Alat
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforelse

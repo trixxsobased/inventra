@@ -70,6 +70,7 @@
                 </div>
                 
                 
+                @if(auth()->user()->role === 'admin')
                 <div class="col-6 col-lg-3 col-md-6">
                     <div class="card">
                         <div class="card-body px-4 py-4-5">
@@ -87,8 +88,32 @@
                         </div>
                     </div>
                 </div>
+                @endif
             </div>
             
+            <!-- Charts Section -->
+            <div class="row mb-4">
+                <div class="col-12 col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Statistik Peminjaman (6 Bulan Terakhir)</h4>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="borrowingsChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Status Peminjaman</h4>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="statusChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <div class="row">
                 <div class="col-12">
@@ -199,18 +224,26 @@
                     <h4>Aksi Cepat</h4>
                 </div>
                 <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('admin.equipment.index') }}" class="btn btn-primary">
-                            <i class="bi bi-box"></i> Kelola Alat
+                    <div class="d-grid gap-3">
+                        @if(auth()->user()->role === 'admin')
+                        <a href="{{ route('admin.equipment.index') }}" class="btn btn-primary d-flex align-items-center text-start p-3">
+                            <i class="bi bi-box me-3 fs-4 flex-shrink-0"></i> 
+                            <span class="lh-sm fw-semibold">Kelola Alat</span>
                         </a>
-                        <a href="{{ route('admin.borrowings.pending') }}" class="btn btn-warning">
-                            <i class="bi bi-clipboard-check"></i> Verifikasi Pinjaman
+                        @endif
+                        <a href="{{ route('admin.borrowings.pending') }}" class="btn btn-warning d-flex align-items-center text-start p-3">
+                            <i class="bi bi-clipboard-check me-3 fs-4 flex-shrink-0"></i> 
+                            <span class="lh-sm fw-semibold">Verifikasi Pinjaman</span>
                         </a>
-                        <a href="{{ route('admin.borrowings.active') }}" class="btn btn-info text-white">
-                            <i class="bi bi-arrow-return-left"></i> Proses Pengembalian
+                        @if(auth()->user()->role === 'admin')
+                        <a href="{{ route('admin.borrowings.active') }}" class="btn btn-info text-white d-flex align-items-center text-start p-3">
+                            <i class="bi bi-arrow-return-left me-3 fs-4 flex-shrink-0"></i> 
+                            <span class="lh-sm fw-semibold">Proses Pengembalian</span>
                         </a>
-                        <a href="{{ route('admin.reports.index') }}" class="btn btn-success">
-                            <i class="bi bi-file-earmark-text"></i> Lihat Laporan
+                        @endif
+                        <a href="{{ route('admin.reports.index') }}" class="btn btn-success d-flex align-items-center text-start p-3">
+                            <i class="bi bi-file-earmark-text me-3 fs-4 flex-shrink-0"></i> 
+                            <span class="lh-sm fw-semibold">Lihat Laporan</span>
                         </a>
                     </div>
                 </div>
@@ -255,9 +288,11 @@
                                             <i class="bi bi-exclamation-triangle me-2"></i>
                                             Stok Tersisa: <strong>{{ $equipment->stock }}</strong>
                                         </div>
+                                        @if(auth()->user()->role === 'admin')
                                         <a href="{{ route('admin.equipment.index', ['search' => $equipment->code]) }}" class="btn btn-primary w-100 btn-sm">
                                             <i class="bi bi-box-arrow-in-right"></i> Kelola Stok
                                         </a>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -271,3 +306,108 @@
     </section>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get theme colors
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? '#334155' : '#e5e7eb';
+    
+    // Monthly Borrowings Chart
+    const borrowingsCtx = document.getElementById('borrowingsChart').getContext('2d');
+    new Chart(borrowingsCtx, {
+        type: 'bar',
+        data: {
+            labels: {!! json_encode($monthlyBorrowings->pluck('month')) !!},
+            datasets: [{
+                label: 'Jumlah Peminjaman',
+                data: {!! json_encode($monthlyBorrowings->pluck('count')) !!},
+                backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: textColor,
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: gridColor
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: textColor
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Status Distribution Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'Dipinjam', 'Dikembalikan', 'Ditolak'],
+            datasets: [{
+                data: [
+                    {{ $borrowingStatus['pending'] ?? 0 }},
+                    {{ $borrowingStatus['borrowed'] ?? 0 }},
+                    {{ $borrowingStatus['returned'] ?? 0 }},
+                    {{ $borrowingStatus['rejected'] ?? 0 }}
+                ],
+                backgroundColor: [
+                    'rgba(251, 191, 36, 0.8)',
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(16, 185, 129, 0.8)',
+                    'rgba(239, 68, 68, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(251, 191, 36, 1)',
+                    'rgba(59, 130, 246, 1)',
+                    'rgba(16, 185, 129, 1)',
+                    'rgba(239, 68, 68, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: textColor,
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+});
+</script>
+@endpush
+

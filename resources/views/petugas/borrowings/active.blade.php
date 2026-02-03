@@ -24,45 +24,78 @@
                         <tr>
                             <th>Peminjam</th>
                             <th>Alat</th>
-                            <th>Tanggal Pinjam</th>
-                            <th>Deadline Kembali</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
+                            <th>Jadwal Pengembalian</th>
+                            <th>Status & Denda</th>
+                            <th class="text-end">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($borrowings as $borrowing)
                             @php
-                               $daysLeft = now()->startOfDay()->diffInDays($borrowing->planned_return_date->startOfDay(), false);
-                               $isLate = $daysLeft < 0;
-                               $lateDays = abs($daysLeft);
-                               $fineAmount = $isLate ? $lateDays * 5000 : 0;
+                                $plannedDate = $borrowing->planned_return_date->startOfDay();
+                                $today = now()->startOfDay();
+                                $diff = (int) $today->diffInDays($plannedDate, false);
+                                
+                                $isLate = $diff < 0;
+                                $isToday = $diff === 0;
+                                $daysLate = $isLate ? abs($diff) : 0;
+                                $daysLeft = abs($diff);
+
+                                $fineAmount = $isLate ? $daysLate * 5000 : 0;
                             @endphp
                             <tr class="{{ $isLate ? 'table-danger-soft' : '' }}">
                                 <td>
-                                    <strong>{{ $borrowing->user->name }}</strong><br>
-                                    <small class="text-muted">{{ $borrowing->user->email }}</small>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar avatar-md bg-light-primary text-primary">
+                                            <i class="bi bi-person-circle fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">{{ $borrowing->user->name }}</h6>
+                                            <small class="text-muted">{{ $borrowing->user->email }}</small>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
-                                    <strong>{{ $borrowing->equipment->name }}</strong><br>
-                                    <small class="text-muted">{{ $borrowing->equipment->code }}</small>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar avatar-md bg-light-info text-info">
+                                            <i class="bi bi-box-seam fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">{{ $borrowing->equipment->name }}</h6>
+                                            <small class="text-muted">{{ $borrowing->equipment->code }}</small>
+                                        </div>
+                                    </div>
                                 </td>
-                                <td>{{ $borrowing->borrow_date->format('d/m/Y') }}</td>
                                 <td>
-                                    {{ $borrowing->planned_return_date->format('d/m/Y') }}
-                                    <br>
+                                    <div class="d-flex flex-column">
+                                        <span class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-calendar-event text-muted"></i>
+                                            {{ $borrowing->planned_return_date->format('d M Y') }}
+                                        </span>
+                                        <small class="text-muted ms-4">
+                                            Pinjam: {{ $borrowing->borrow_date->format('d M') }}
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
                                     @if($isLate)
-                                        <span class="badge bg-danger">Terlambat {{ $lateDays }} hari</span>
-                                    @elseif($daysLeft == 0)
-                                        <span class="badge bg-warning">Hari ini</span>
+                                        <div class="d-flex flex-column align-items-start">
+                                            <span class="badge bg-light-danger text-danger mb-1">
+                                                <i class="bi bi-exclamation-circle me-1"></i> Terlambat {{ $daysLate }} hari
+                                            </span>
+                                            <small class="text-danger fw-bold">Denda: Rp {{ number_format($fineAmount, 0, ',', '.') }}</small>
+                                        </div>
+                                    @elseif($isToday)
+                                        <span class="badge bg-light-warning text-warning">
+                                            <i class="bi bi-alarm me-1"></i> Hari Ini
+                                        </span>
                                     @else
-                                        <span class="badge bg-success">{{ $daysLeft }} hari lagi</span>
+                                        <span class="badge bg-light-success text-success">
+                                            <i class="bi bi-clock-history me-1"></i> {{ $daysLeft }} hari lagi
+                                        </span>
                                     @endif
                                 </td>
-                                <td>
-                                    <span class="badge bg-info">Dipinjam</span>
-                                </td>
-                                <td>
+                                <td class="text-end">
                                     <div class="btn-group rounded-pill shadow-sm" role="group" style="overflow: hidden;">
                                         <button type="button" 
                                                 class="btn btn-primary btn-sm px-4 border-0" 
@@ -79,7 +112,7 @@
                             <div class="modal fade" id="returnModal{{ $borrowing->id }}" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
-                                        <form action="{{ route('admin.borrowings.process-return', $borrowing->id) }}" method="POST">
+                                        <form action="{{ route('petugas.borrowings.process-return', $borrowing->id) }}" method="POST">
                                             @csrf
                                             <div class="modal-header">
                                                 <h5 class="modal-title">Pengembalian Alat</h5>
@@ -96,7 +129,7 @@
                                                 <!-- Info Denda -->
                                                 @if($isLate)
                                                 <div class="alert alert-danger">
-                                                    <h6><i class="bi bi-exclamation-circle"></i> Terlambat {{ $lateDays }} Hari</h6>
+                                                    <h6><i class="bi bi-exclamation-circle"></i> Terlambat {{ $daysLate }} Hari</h6>
                                                     <p class="mb-0">
                                                         Total Denda: <strong>Rp {{ number_format($fineAmount, 0, ',', '.') }}</strong>
                                                         <small>(Rp 5.000/hari)</small>
@@ -186,7 +219,6 @@
     }
     [data-theme="dark"] .table-danger-soft td:first-child {
         border-left: 3px solid #e74a3b;
-        box-shadow: inset 3px 0 0 -3px #e74a3b;
     }
     [data-theme="dark"] .table-hover .table-danger-soft:hover > td {
         --bs-table-accent-bg: transparent !important;
@@ -196,12 +228,13 @@
     }
     /* Fix Modal Info Box in Dark Mode */
     [data-theme="dark"] .bg-body-tertiary {
-        background-color: #2b3547 !important; /* Explicit Dark Grey */
+        background-color: #2b3547 !important;
         color: #e2e8f0 !important;
         border-color: #4b5563 !important;
     }
 </style>
 @endpush
+
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {

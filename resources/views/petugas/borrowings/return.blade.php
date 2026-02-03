@@ -16,7 +16,7 @@
                     <h4 class="card-title">Informasi Pengembalian</h4>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.borrowings.process-return', $borrowing->id) }}" method="POST">
+                    <form action="{{ route('petugas.borrowings.process-return', $borrowing->id) }}" method="POST">
                         @csrf
                         
                         <div class="alert alert-info">
@@ -84,7 +84,7 @@
                         @endif
                         
                         <div class="d-flex justify-content-between">
-                            <a href="{{ route('admin.borrowings.active') }}" class="btn btn-secondary">
+                            <a href="{{ route('petugas.borrowings.active') }}" class="btn btn-secondary">
                                 <i class="bi bi-arrow-left"></i> Kembali
                             </a>
                             <button type="button" 

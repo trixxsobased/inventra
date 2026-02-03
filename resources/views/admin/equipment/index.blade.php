@@ -57,14 +57,14 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th width="5%">#</th>
-                            <th>Kode</th>
-                            <th>Nama Alat</th>
-                            <th>Kategori</th>
-                            <th>Stok</th>
-                            <th>Lokasi</th>
-                            <th>Kondisi</th>
-                            <th width="15%">Aksi</th>
+                            <th class="px-4 py-3 text-secondary text-uppercase small fw-bold" width="5%">#</th>
+                            <th class="px-4 py-3 text-secondary text-uppercase small fw-bold">Kode</th>
+                            <th class="px-4 py-3 text-secondary text-uppercase small fw-bold">Nama Alat</th>
+                            <th class="px-4 py-3 text-secondary text-uppercase small fw-bold">Kategori</th>
+                            <th class="px-4 py-3 text-secondary text-uppercase small fw-bold">Stok</th>
+                            <th class="px-4 py-3 text-secondary text-uppercase small fw-bold">Lokasi</th>
+                            <th class="px-4 py-3 text-secondary text-uppercase small fw-bold">Kondisi</th>
+                            <th class="px-4 py-3 text-secondary text-uppercase small fw-bold" width="15%">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -94,31 +94,35 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <div class="btn-group" role="group">
+                                    <div class="btn-group rounded-pill shadow-sm" role="group" style="overflow: hidden;">
                                         <button type="button" 
-                                                class="btn btn-sm btn-info"
+                                                class="btn btn-sm btn-info px-3 border-0"
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#qrModal{{ $item->id }}"
                                                 title="QR Code">
                                             <i class="bi bi-qr-code"></i>
                                         </button>
                                         <button type="button" 
-                                                class="btn btn-sm btn-warning"
+                                                class="btn btn-sm btn-warning px-3 border-0"
                                                 data-bs-toggle="modal" 
-                                                data-bs-target="#editModal{{ $item->id }}">
-                                            <i class="bi bi-pencil"></i>
+                                                data-bs-target="#editModal{{ $item->id }}"
+                                                title="Edit">
+                                            <i class="bi bi-pencil text-dark"></i>
                                         </button>
-                                        <form action="{{ route('admin.equipment.destroy', $item->id) }}" 
-                                              method="POST" 
-                                              class="d-inline"
-                                              onsubmit="return confirm('Yakin ingin menghapus alat ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-danger px-3 border-0" 
+                                                title="Hapus"
+                                                onclick="var form = document.getElementById('delete-form-{{ $item->id }}'); confirmAction(form, {title: 'Hapus Alat?', text: 'Data alat {{ $item->name }} ({{ $item->code }}) akan dihapus secara permanen.', icon: 'danger', confirmButtonText: '<i class=\'bi bi-trash me-1\'></i> Ya, Hapus', confirmButtonColor: '#dc2626'})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     </div>
+                                    <form id="delete-form-{{ $item->id }}" 
+                                          action="{{ route('admin.equipment.destroy', $item->id) }}" 
+                                          method="POST" 
+                                          class="d-none">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
                                 </td>
                             </tr>
 
