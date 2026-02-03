@@ -7,10 +7,13 @@ use App\Http\Controllers\Admin\EquipmentController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\BorrowingController as AdminBorrowingController;
 use App\Http\Controllers\Admin\FineController;
-use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DamagedEquipmentController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Petugas\DashboardController as PetugasDashboardController;
+use App\Http\Controllers\Petugas\BorrowingController as PetugasBorrowingController;
+use App\Http\Controllers\Petugas\ReportController as PetugasReportController;
 use App\Http\Controllers\Peminjam\EquipmentBrowseController;
 use App\Http\Controllers\Peminjam\BorrowingController;
 use App\Http\Controllers\ProfileController;
@@ -25,55 +28,52 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Dashboard utama (redirect based on role)
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
-    // Profile management
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    Route::get('/equipment/browse', [EquipmentBrowseController::class, 'index'])->name('equipment.browse');
+
+    Route::get('/equipment/{equipment}', [EquipmentBrowseController::class, 'show'])->name('equipment.show');
 });
 
-// Admin & Petugas Routes
-Route::prefix('admin')
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
     ->name('admin.')
-    ->middleware(['auth', 'role:admin,petugas'])
     ->group(function () {
-
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         
+        Route::resource('users', UserController::class)->except(['create', 'edit', 'show']);
         Route::resource('equipment', EquipmentController::class)->except(['create', 'edit']);
+        Route::resource('categories', CategoryController::class);
         
-        // QR Code Routes
+        Route::get('/borrowings/pending', [AdminBorrowingController::class, 'pending'])->name('borrowings.pending');
+        Route::get('/borrowings/active', [AdminBorrowingController::class, 'active'])->name('borrowings.active');
+        Route::get('/borrowings/{borrowing}', [AdminBorrowingController::class, 'show'])->name('borrowings.show');
+        Route::put('/borrowings/{borrowing}/approve', [AdminBorrowingController::class, 'approve'])->name('borrowings.approve');
+        Route::put('/borrowings/{borrowing}/reject', [AdminBorrowingController::class, 'reject'])->name('borrowings.reject');
+        Route::get('/borrowings/{borrowing}/return', [AdminBorrowingController::class, 'showReturn'])->name('borrowings.return');
+        Route::post('/borrowings/{borrowing}/return', [AdminBorrowingController::class, 'processReturn'])->name('borrowings.process-return');
+        Route::get('/borrowings/{borrowing}/print', [AdminBorrowingController::class, 'print'])->name('borrowings.print');
+
+        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('/activity-logs/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show');
+
         Route::get('/equipment/{equipment}/qr', [EquipmentController::class, 'generateQR'])->name('equipment.qr');
         Route::get('/equipment/{equipment}/qr/download', [EquipmentController::class, 'downloadQR'])->name('equipment.qr.download');
         Route::get('/equipment-qr/bulk', [EquipmentController::class, 'bulkQR'])->name('equipment.qr.bulk');
         Route::get('/equipment-qr/scan', [EquipmentController::class, 'scanQR'])->name('equipment.qr.scan');
-        
-        Route::resource('damaged-equipment', DamagedEquipmentController::class)->only(['index', 'show']);
-        Route::resource('categories', CategoryController::class);
 
-        // User Management (Admin Only)
-        Route::middleware('role:admin')->group(function () {
-            Route::resource('users', UserController::class)->except(['create', 'edit', 'show']);
-        });
-
-        // Borrowing Workflow
-        Route::get('/borrowings/pending', [AdminBorrowingController::class, 'pending'])->name('borrowings.pending');
-        Route::get('/borrowings/active', [AdminBorrowingController::class, 'active'])->name('borrowings.active');
-        Route::put('/borrowings/{borrowing}/approve', [AdminBorrowingController::class, 'approve'])->name('borrowings.approve');
-        Route::put('/borrowings/{borrowing}/reject', [AdminBorrowingController::class, 'reject'])->name('borrowings.reject');
-        Route::post('/borrowings/{borrowing}/verify', [AdminBorrowingController::class, 'verify'])->name('borrowings.verify');
-        
-        // Return & Fine
-        Route::get('/borrowings/{borrowing}/return', [AdminBorrowingController::class, 'showReturn'])->name('borrowings.return');
-        Route::post('/borrowings/{borrowing}/return', [AdminBorrowingController::class, 'processReturn'])->name('borrowings.process-return');
         Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
         Route::post('/fines/{fine}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
         
-        // Purchase Requisitions
+        Route::resource('damaged-equipment', DamagedEquipmentController::class)->only(['index', 'show']);
+        Route::put('/damaged-equipment/{damaged_equipment}/resolve', [DamagedEquipmentController::class, 'resolve'])->name('damaged-equipment.resolve');
+
         Route::prefix('purchase-requisitions')->name('purchase-requisitions.')->group(function () {
             Route::get('/', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'index'])->name('index');
             Route::get('/create', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'create'])->name('create');
@@ -84,29 +84,43 @@ Route::prefix('admin')
             Route::delete('/{purchaseRequisition}', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'destroy'])->name('destroy');
             Route::post('/{purchaseRequisition}/approve', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'approve'])->name('approve');
             Route::post('/{purchaseRequisition}/reject', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'reject'])->name('reject');
+            Route::post('/{purchaseRequisition}/receive', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'markAsDone'])->name('receive');
             Route::get('/{purchaseRequisition}/export-pdf', [App\Http\Controllers\Admin\PurchaseRequisitionController::class, 'exportPDF'])->name('export-pdf');
         });
 
-        // Reports
-        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-        Route::get('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
-        Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
-
-        // Activity Logs
-        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
-        Route::get('/activity-logs/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show');
+        Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/generate', [AdminReportController::class, 'generate'])->name('reports.generate');
+        Route::get('/reports/export', [AdminReportController::class, 'export'])->name('reports.export');
     });
 
-// Peminjam / Siswa Routes
+Route::middleware(['auth', 'role:petugas'])
+    ->prefix('petugas')
+    ->name('petugas.')
+    ->group(function () {
+        Route::get('/dashboard', [PetugasDashboardController::class, 'index'])->name('dashboard');
+        
+        Route::get('/borrowings/pending', [PetugasBorrowingController::class, 'pending'])->name('borrowings.pending');
+        Route::get('/borrowings/active', [PetugasBorrowingController::class, 'active'])->name('borrowings.active');
+        Route::get('/borrowings/{borrowing}', [PetugasBorrowingController::class, 'show'])->name('borrowings.show');
+        Route::put('/borrowings/{borrowing}/approve', [PetugasBorrowingController::class, 'approve'])->name('borrowings.approve');
+        Route::put('/borrowings/{borrowing}/reject', [PetugasBorrowingController::class, 'reject'])->name('borrowings.reject');
+        
+        Route::get('/borrowings/{borrowing}/return', [PetugasBorrowingController::class, 'showReturn'])->name('borrowings.return');
+        Route::post('/borrowings/{borrowing}/return', [PetugasBorrowingController::class, 'processReturn'])->name('borrowings.process-return');
+        Route::get('/borrowings/{borrowing}/print', [PetugasBorrowingController::class, 'print'])->name('borrowings.print');
+        
+        Route::get('/reports', [PetugasReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/generate', [PetugasReportController::class, 'generate'])->name('reports.generate');
+    });
+
 Route::middleware(['auth', 'role:peminjam'])
     ->group(function () {
         Route::get('/peminjam/dashboard', [App\Http\Controllers\Peminjam\DashboardController::class, 'index'])->name('peminjam.dashboard');
-        
-        Route::get('/equipment/browse', [EquipmentBrowseController::class, 'index'])->name('equipment.browse');
-        Route::get('/equipment/{equipment}', [EquipmentBrowseController::class, 'show'])->name('equipment.show');
 
         Route::get('/borrowings', [BorrowingController::class, 'index'])->name('borrowings.index');
         Route::get('/borrowings/create/{equipment}', [BorrowingController::class, 'create'])->name('borrowings.create');
         Route::post('/borrowings', [BorrowingController::class, 'store'])->name('borrowings.store');
         Route::get('/borrowings/{borrowing}', [BorrowingController::class, 'show'])->name('borrowings.show');
+        Route::delete('/borrowings/{borrowing}', [BorrowingController::class, 'destroy'])->name('borrowings.destroy');
     });
+

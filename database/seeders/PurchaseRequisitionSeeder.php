@@ -12,8 +12,13 @@ class PurchaseRequisitionSeeder extends Seeder
 {
     public function run(): void
     {
+        // Use admin since we no longer have petugas user by default
         $admin = User::where('role', 'admin')->first();
-        $petugas = User::where('role', 'petugas')->first();
+        
+        if (!$admin) {
+            $this->command->warn('⚠️ No admin user found. Run UserSeeder first.');
+            return;
+        }
         
         $categories = Category::all();
         $equipment = Equipment::where('condition', 'rusak berat')->first();
@@ -22,7 +27,7 @@ class PurchaseRequisitionSeeder extends Seeder
         PurchaseRequisition::create([
             'category_id' => $categories->where('name', 'Rekayasa Perangkat Lunak (RPL)')->first()->id ?? 1,
             'equipment_id' => $equipment?->id,
-            'requested_by' => $petugas->id,
+            'requested_by' => $admin->id,
             'item_name' => 'Laptop ASUS ROG Strix G15',
             'quantity' => 2,
             'estimated_price' => 15000000,
@@ -35,7 +40,7 @@ class PurchaseRequisitionSeeder extends Seeder
         // Requisition 2: High Priority - Penambahan stok
         PurchaseRequisition::create([
             'category_id' => $categories->where('name', 'Teknik Komputer dan Jaringan (TKJ)')->first()->id ?? 2,
-            'requested_by' => $petugas->id,
+            'requested_by' => $admin->id,
             'item_name' => 'Toolkit Jaringan Professional',
             'quantity' => 5,
             'estimated_price' => 1500000,
@@ -64,7 +69,7 @@ class PurchaseRequisitionSeeder extends Seeder
         // Requisition 4: Rejected
         PurchaseRequisition::create([
             'category_id' => $categories->where('name', 'Teknik Otomotif')->first()->id ?? 4,
-            'requested_by' => $petugas->id,
+            'requested_by' => $admin->id,
             'item_name' => 'Mesin Bubut CNC Mini',
             'quantity' => 1,
             'estimated_price' => 35000000,
@@ -80,7 +85,7 @@ class PurchaseRequisitionSeeder extends Seeder
         // Requisition 5: Medium - New stock untuk praktik
         PurchaseRequisition::create([
             'category_id' => $categories->where('name', 'Broadcasting')->first()->id ?? 5,
-            'requested_by' => $petugas->id,
+            'requested_by' => $admin->id,
             'item_name' => 'Microphone Condenser Audio-Technica AT2020',
             'quantity' => 3,
             'estimated_price' => 2500000,

@@ -12,8 +12,13 @@ class DamagedEquipmentSeeder extends Seeder
 {
     public function run(): void
     {
-        $petugas = User::where('role', 'petugas')->first();
+        // Use admin since we no longer have petugas user by default
         $admin = User::where('role', 'admin')->first();
+        
+        if (!$admin) {
+            $this->command->warn('⚠️ No admin user found. Run UserSeeder first.');
+            return;
+        }
         
         // Generate data dari history peminjaman
         $returnedBorrowings = Borrowing::where('status', 'returned')
@@ -26,7 +31,7 @@ class DamagedEquipmentSeeder extends Seeder
                 DamagedEquipment::create([
                     'equipment_id' => $borrowing->equipment_id,
                     'borrowing_id' => $borrowing->id,
-                    'reported_by' => $petugas->id,
+                    'reported_by' => $admin->id,
                     'reported_at' => $borrowing->actual_return_date,
                     'damage_description' => $this->getDamageDescription($borrowing->equipment->category->name ?? 'Umum'),
                     'resolution_status' => 'pending',

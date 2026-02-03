@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -15,14 +17,18 @@ class ActivityLogSeeder extends Seeder
     {
         $admin = User::where('role', 'admin')->first();
         $petugas = User::where('role', 'petugas')->first();
-        $siswa = User::where('role', 'peminjam')->first();
+        $peminjam = User::where('role', 'peminjam')->first();
+
+        if (!$admin) {
+            $this->command->warn('⚠️ No admin user found. Run UserSeeder first.');
+            return;
+        }
 
         $equipment = Equipment::first();
         $borrowings = Borrowing::with('equipment', 'user')->take(5)->get();
 
         $logs = [];
 
-        // === Equipment logs (30 hari terakhir) ===
         $logs[] = [
             'user_id' => $admin->id,
             'action' => 'created',
@@ -51,9 +57,7 @@ class ActivityLogSeeder extends Seeder
             'created_at' => Carbon::now()->subDays(20),
         ];
 
-        // === Borrowing logs ===
         foreach ($borrowings as $i => $borrowing) {
-            // Request peminjaman
             $logs[] = [
                 'user_id' => $borrowing->user_id,
                 'action' => 'created',
@@ -68,7 +72,6 @@ class ActivityLogSeeder extends Seeder
                 'created_at' => Carbon::now()->subDays(15 - $i),
             ];
 
-            // Approval/Reject
             if ($borrowing->status === 'borrowed' || $borrowing->status === 'returned') {
                 $logs[] = [
                     'user_id' => $admin->id,
@@ -101,7 +104,6 @@ class ActivityLogSeeder extends Seeder
                 ];
             }
 
-            // Return
             if ($borrowing->status === 'returned') {
                 $logs[] = [
                     'user_id' => $petugas->id ?? $admin->id,
@@ -119,7 +121,6 @@ class ActivityLogSeeder extends Seeder
             }
         }
 
-        // === Login logs ===
         $logs[] = [
             'user_id' => $admin->id,
             'action' => 'login',
@@ -135,11 +136,11 @@ class ActivityLogSeeder extends Seeder
         ];
 
         $logs[] = [
-            'user_id' => $siswa->id,
+            'user_id' => $peminjam->id,
             'action' => 'login',
             'model_type' => 'User',
-            'model_id' => $siswa->id,
-            'model_label' => $siswa->name,
+            'model_id' => $peminjam->id,
+            'model_label' => $peminjam->name,
             'old_values' => null,
             'new_values' => null,
             'description' => 'User login ke sistem',
@@ -148,7 +149,6 @@ class ActivityLogSeeder extends Seeder
             'created_at' => Carbon::now()->subHours(1),
         ];
 
-        // Insert all logs
         foreach ($logs as $log) {
             ActivityLog::create($log);
         }
