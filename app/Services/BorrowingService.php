@@ -14,7 +14,6 @@ use Exception;
 
 class BorrowingService
 {
-    // Verifikasi peminjaman (approve/reject) + auto update stock via trigger
     public function verifyBorrowing(int $borrowingId, int $verifiedBy, bool $approve, ?string $rejectionReason = null): array
     {
         try {
@@ -26,8 +25,15 @@ class BorrowingService
                 throw new \Exception('Peminjaman sudah diverifikasi sebelumnya');
             }
 
+            if ($borrowing->user_id === $verifiedBy) {
+                DB::rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'Konflik Kepentingan: Anda tidak dapat memverifikasi peminjaman Anda sendiri.'
+                ];
+            }
+
             if ($approve) {
-                // Cek stock sebelum approve
                 if ($borrowing->equipment->stock < 1) {
                     DB::rollBack();
                     return [
@@ -37,7 +43,6 @@ class BorrowingService
                     ];
                 }
 
-                // Ubah status ke 'borrowed' - trigger DB bakal auto kurangin stock
                 $borrowing->update([
                     'status' => 'borrowed',
                     'verified_by' => $verifiedBy,
@@ -47,7 +52,6 @@ class BorrowingService
 
                 DB::commit();
 
-                // Send email notification
                 $borrowing->user->notify(new BorrowingApproved($borrowing->fresh()->load('equipment')));
 
                 return [
@@ -67,7 +71,6 @@ class BorrowingService
 
                 DB::commit();
 
-                // Send email notification
                 $borrowing->user->notify(new BorrowingRejected($borrowing->fresh()->load('equipment')));
 
                 return [
@@ -87,7 +90,6 @@ class BorrowingService
         }
     }
 
-    // Proses pengembalian alat - handle kondisi barang rusak
     public function processReturn(int $borrowingId, string $returnDate, int $verifiedBy, ?string $returnCondition = null): array
     {
         try {
@@ -101,7 +103,6 @@ class BorrowingService
 
             $isSeverelyDamaged = $returnCondition === 'rusak berat';
             
-            // Update borrowing dengan return condition
             $borrowing->update([
                 'status' => 'returned',
                 'actual_return_date' => $returnDate,
@@ -110,9 +111,7 @@ class BorrowingService
 
             $message = 'Pengembalian berhasil diproses.';
 
-            // Handle barang rusak berat - JANGAN restore stock
             if ($isSeverelyDamaged) {
-                // Create record di damaged_equipment
                 DamagedEquipment::create([
                     'equipment_id' => $borrowing->equipment_id,
                     'borrowing_id' => $borrowing->id,
@@ -122,14 +121,12 @@ class BorrowingService
                     'resolution_status' => 'pending',
                 ]);
 
-                // Update kondisi equipment jadi rusak berat
                 $borrowing->equipment->update([
                     'condition' => 'rusak berat'
                 ]);
 
                 $message = 'Pengembalian berhasil. Barang rusak berat telah dicatat dan tidak dikembalikan ke stok.';
             } else {
-                // Untuk kondisi baik atau rusak ringan, trigger DB akan auto restore stock
                 if ($returnCondition === 'rusak ringan') {
                     $message = 'Pengembalian berhasil. Stok telah ditambahkan (kondisi: rusak ringan).';
                 } else {
@@ -162,6 +159,7 @@ class BorrowingService
         return Borrowing::create([
             'user_id' => $data['user_id'],
             'equipment_id' => $data['equipment_id'],
+            'borrow_date' => now()->toDateString(),
             'planned_return_date' => $data['planned_return_date'],
             'purpose' => $data['purpose'] ?? null,
             'notes' => $data['notes'] ?? null,

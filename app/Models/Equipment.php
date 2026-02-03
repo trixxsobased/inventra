@@ -22,7 +22,6 @@ class Equipment extends Model
         'location',
         'condition',
         'image',
-        // Manajemen aset perusahaan
         'price',
         'purchase_year',
         'vendor',
@@ -32,7 +31,6 @@ class Equipment extends Model
         'stock' => 'integer',
     ];
 
-    // Nonaktifkan updated_at karena hanya perlu created_at untuk log equipment
     protected $updated_at = null;
 
     public function category(): BelongsTo
@@ -58,5 +56,15 @@ class Equipment extends Model
     public function activeBorrowings(): HasMany
     {
         return $this->borrowings()->whereIn('status', ['approved', 'borrowed']);
+    }
+
+    public function pendingBorrowings(): HasMany
+    {
+        return $this->borrowings()->where('status', 'pending');
+    }
+
+    public function getPendingCountAttribute(): int
+    {
+        return $this->pendingBorrowings()->count();
     }
 }

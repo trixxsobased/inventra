@@ -26,25 +26,16 @@ class ActivityLog extends Model
         'new_values' => 'array',
     ];
 
-    /**
-     * Get the user that performed the action
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the related model
-     */
     public function subject(): MorphTo
     {
         return $this->morphTo('model');
     }
 
-    /**
-     * Get formatted action label
-     */
     public function getActionLabelAttribute(): string
     {
         return match($this->action) {
@@ -61,9 +52,6 @@ class ActivityLog extends Model
         };
     }
 
-    /**
-     * Get action badge color
-     */
     public function getActionColorAttribute(): string
     {
         return match($this->action) {
@@ -80,9 +68,6 @@ class ActivityLog extends Model
         };
     }
 
-    /**
-     * Helper to log activity
-     */
     public static function log(
         string $action,
         ?Model $model = null,
@@ -104,12 +89,8 @@ class ActivityLog extends Model
         ]);
     }
 
-    /**
-     * Get human-readable label for a model
-     */
     protected static function getModelLabel(Model $model): string
     {
-        // Try common label fields
         foreach (['name', 'title', 'code', 'username', 'email'] as $field) {
             if (isset($model->$field)) {
                 return (string) $model->$field;

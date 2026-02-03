@@ -6,17 +6,13 @@ use Carbon\Carbon;
 
 class FineCalculator
 {
-    // Hitung denda berdasarkan keterlambatan (default: Rp 5.000/hari)
     public static function calculate(string $plannedReturnDate, string $actualReturnDate, float $ratePerDay = 5000): array
     {
         $planned = Carbon::parse($plannedReturnDate);
         $actual = Carbon::parse($actualReturnDate);
 
-        // Hitung selisih hari
         $daysLate = $actual->diffInDays($planned, false);
 
-        // Jika negatif (terlambat), ubah menjadi positif
-        // Jika positif atau 0 (tepat waktu/lebih awal), tidak ada denda
         if ($daysLate < 0) {
             $daysLate = abs($daysLate);
             $fineAmount = $daysLate * $ratePerDay;
@@ -44,7 +40,6 @@ class FineCalculator
         return 'Rp ' . number_format($amount, 0, ',', '.');
     }
 
-    // Hitung info denda detail (actualReturnDate null = hari ini)
     public static function getDetailedInfo(string $plannedReturnDate, ?string $actualReturnDate = null, float $ratePerDay = 5000): array
     {
         $actualDate = $actualReturnDate ?? Carbon::now()->toDateString();

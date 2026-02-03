@@ -6,12 +6,8 @@ use App\Models\ActivityLog;
 
 trait LogsActivity
 {
-    /**
-     * Boot the trait
-     */
     public static function bootLogsActivity(): void
     {
-        // Log when model is created
         static::created(function ($model) {
             ActivityLog::log(
                 'created',
@@ -22,17 +18,14 @@ trait LogsActivity
             );
         });
 
-        // Log when model is updated
         static::updated(function ($model) {
             $dirty = $model->getDirty();
             $original = array_intersect_key($model->getOriginal(), $dirty);
             
-            // Skip jika tidak ada perubahan signifikan
             if (empty($dirty)) {
                 return;
             }
 
-            // Filter out timestamp fields
             unset($dirty['updated_at'], $dirty['created_at']);
             unset($original['updated_at'], $original['created_at']);
 
@@ -47,7 +40,6 @@ trait LogsActivity
             }
         });
 
-        // Log when model is deleted
         static::deleted(function ($model) {
             ActivityLog::log(
                 'deleted',
